@@ -37,8 +37,10 @@ using namespace std;
 
 
 // Used to test a priority queue containing pointers to integers.
-struct IntPtrComp {
-    bool operator() (const int *a, const int *b) const {
+struct IntPtrComp
+{
+    bool operator() (const int *a, const int *b) const
+    {
         return *a < *b;
     }
 };
@@ -48,12 +50,17 @@ struct IntPtrComp {
 // that you should.  Complete this function by adding a functor that compares
 // two HiddenData structures, create a PQ of the specified type, and call
 // this function from main().
-void testHiddenData(const string &pqType) {
-    struct HiddenData {
+void testHiddenData(const string &pqType)
+{
+    struct HiddenData
+    {
         int data;
     };
-    struct HiddenDataComp {
-        bool operator()(const HiddenData &/*a*/, const HiddenData &/*b*/) const {
+    
+    struct HiddenDataComp
+    {
+        bool operator()(const HiddenData &/*a*/, const HiddenData &/*b*/) const
+        {
             // TODO: Finish this functor; when you do, uncomment the
             // parameters in the line above
             return false;
@@ -68,7 +75,8 @@ void testHiddenData(const string &pqType) {
 
 // TODO: Add more code to this function to test if updatePriorities()
 // is working properly.
-void testUpdatePrioritiesHelper(Eecs281PQ<int *, IntPtrComp> *pq) {
+void testUpdatePrioritiesHelper(Eecs281PQ<int *, IntPtrComp> *pq)
+{
     vector<int> data;
     data.reserve(100);
     data.push_back(1);
@@ -78,7 +86,8 @@ void testUpdatePrioritiesHelper(Eecs281PQ<int *, IntPtrComp> *pq) {
     // until AFTER the vector stops changing size!  Think about why.
     // You can add up to 100 values, or change the reserve if you want more.
     
-    for (size_t i = 0; i < data.size(); ++i) {
+    for (size_t i = 0; i < data.size(); ++i)
+    {
         pq->push(&data[i]);
     } // for
     
@@ -91,16 +100,19 @@ void testUpdatePrioritiesHelper(Eecs281PQ<int *, IntPtrComp> *pq) {
 
 // TODO: Add more code to this function to test if updatePriorities()
 // is working properly.
-void testUpdatePriorities(const string &pqType) {
+void testUpdatePriorities(const string &pqType)
+{
     Eecs281PQ<int *, IntPtrComp> *pq = nullptr;
     cout << "Testing updatePriorities() on " << pqType << endl;
     
-    if (pqType == "Unordered") {
+    if (pqType == "Unordered")
+    {
         pq = new UnorderedPQ<int *, IntPtrComp>;
     } // if
     // TODO: Add more types here inside 'else if' statements, like in main().
     
-    if (!pq) {
+    if (!pq)
+    {
         cout << "Invalid pq pointer; did you forget to create it?" << endl;
         return;
     } // if

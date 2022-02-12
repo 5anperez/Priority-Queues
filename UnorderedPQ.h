@@ -16,7 +16,8 @@
 // are written, especially the use of this->compare.
 
 template<typename TYPE, typename COMP_FUNCTOR = std::less<TYPE>>
-class UnorderedPQ : public Eecs281PQ<TYPE, COMP_FUNCTOR> {
+class UnorderedPQ : public Eecs281PQ<TYPE, COMP_FUNCTOR>
+{
     // This is a way to refer to the base class object.
     using BaseClass = Eecs281PQ<TYPE, COMP_FUNCTOR>;
 

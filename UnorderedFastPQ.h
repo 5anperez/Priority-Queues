@@ -23,7 +23,8 @@ static const size_t UNKNOWN = std::numeric_limits<size_t>::max();
 // are written, especially the use of this->compare.
 
 template<typename TYPE, typename COMP_FUNCTOR = std::less<TYPE>>
-class UnorderedFastPQ : public Eecs281PQ<TYPE, COMP_FUNCTOR> {
+class UnorderedFastPQ : public Eecs281PQ<TYPE, COMP_FUNCTOR>
+{
     // This is a way to refer to the base class object.
     using BaseClass = Eecs281PQ<TYPE, COMP_FUNCTOR>;
 
