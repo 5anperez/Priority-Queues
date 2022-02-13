@@ -42,6 +42,7 @@ public:
     virtual void updatePriorities() = 0;
     
 protected:
+    
     Eecs281PQ() {}
     explicit Eecs281PQ(const COMP_FUNCTOR &comp) : compare{ comp } {}
     

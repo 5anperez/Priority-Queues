@@ -22,39 +22,47 @@ class UnorderedPQ : public Eecs281PQ<TYPE, COMP_FUNCTOR>
     using BaseClass = Eecs281PQ<TYPE, COMP_FUNCTOR>;
 
 public:
+    
+    // default ctor
     // Description: Construct an empty heap with an optional comparison functor.
     // Runtime: O(1)
     explicit UnorderedPQ(COMP_FUNCTOR comp = COMP_FUNCTOR()) :
-        BaseClass{ comp } {
-    } // UnorderedPQ()
+        BaseClass{ comp }
+    {} // UnorderedPQ()
 
-
+    // range-based ctor
     // Description: Construct a heap out of an iterator range with an optional
     //              comparison functor.
     // Runtime: O(n) where n is number of elements in range.
     template<typename InputIterator>
-    UnorderedPQ(InputIterator start, InputIterator end, COMP_FUNCTOR comp = COMP_FUNCTOR()) :
-        BaseClass{ comp }, data{ start, end } {
-    } // UnorderedPQ()
+    UnorderedPQ(InputIterator start, InputIterator end,
+                COMP_FUNCTOR comp = COMP_FUNCTOR()) : // WHAT IS THIS LINE DOING?
+        BaseClass{ comp }, data{ start, end }
+    {} // UnorderedPQ()
 
 
     // Description: Destructor doesn't need any code, the data vector will
-    //              be destroyed automaticslly.
-    virtual ~UnorderedPQ() {
-    } // ~UnorderedPQ()
+    //              be destroyed automatically.
+    virtual ~UnorderedPQ()
+    {} // ~UnorderedPQ()
 
 
     // Description: Does nothing for this implementation, as items can never be
     //              'out of order'.
     // Runtime: O(1)
-    virtual void updatePriorities() {
-    } // updatePriorities()
+    virtual void updatePriorities()
+    {} // updatePriorities()
 
 
     // Description: Add a new element to the heap.
     // Runtime: Amortized O(1)
-    virtual void push(const TYPE &val) {
+    virtual void push(const TYPE &val)
+    {
         data.push_back(val);
+        
+        // if this was an ordered pq we would call fixUp(data, data.size()) here to
+        // to maintain the sorting invariants, which would be O(log n).
+        
     } // push()
 
 
@@ -66,12 +74,17 @@ public:
     // Runtime: O(n)
     // Note: If the most extreme element is already known (as would happen if
     //       .top() was called before .pop()), this function is O(1).
-    virtual void pop() {
-        // Replace the most extreme element with the element at the back, then
-        // pop_back().  This is much faster than erasing from the middle of a
+    virtual void pop()
+    {
+        // Replace (overwrite) the most extreme element with the element at the back,
+        // then pop_back().  This is much faster than erasing from the middle of a
         // vector.
         data[findExtreme()] = data.back();
         data.pop_back();
+        
+        // if this was an ordered pq, we would call fixDown(data, data.size(), 1)
+        // here to maintain the sorting invariants, which would be O(log n).
+        
     } // pop()
 
 
@@ -80,7 +93,8 @@ public:
     //              be const because we cannot allow it to be modified, as that
     //              might make it no longer be the most extreme element.
     // Runtime: O(n)
-    virtual const TYPE &top() const {
+    virtual const TYPE &top() const
+    {
         // Find the most extreme element and return it by const reference.
         return data[findExtreme()];
     } // top()
@@ -88,27 +102,32 @@ public:
 
     // Description: Get the number of elements in the heap.
     // Runtime: O(1)
-    virtual std::size_t size() const {
+    virtual std::size_t size() const
+    {
         return data.size();
     } // size()
 
     // Description: Return true if the heap is empty.
     // Runtime: O(1)
-    virtual bool empty() const {
+    virtual bool empty() const
+    {
         return data.empty();
     } // empty()
 
 
 private:
+    
     // Note: This vector *must* be used for your heap implementation.
     std::vector<TYPE> data;
 
 private:
+    
     // Description: Find the 'most extreme' element of the data vector, using
     //              this->compare() to check if one element is 'less than'
     //              another.
     // Runtime: O(n)
-    size_t findExtreme() const {
+    size_t findExtreme() const
+    {
         size_t index = 0;
 
         for (size_t i = 1; i < data.size(); ++i)

@@ -109,6 +109,18 @@ void testUpdatePriorities(const string &pqType)
     {
         pq = new UnorderedPQ<int *, IntPtrComp>;
     } // if
+    else if (pqType == "Sorted")
+    {
+        pq = new SortedPQ<int *, IntPtrComp>;
+    } // else if
+    else if (pqType == "Binary")
+    {
+        pq = new BinaryPQ<int *, IntPtrComp>;
+    } // else if
+    else if (pqType == "Pairing")
+    {
+        pq = new PairingPQ<int *, IntPtrComp>;
+    } // else if
     // TODO: Add more types here inside 'else if' statements, like in main().
     
     if (!pq)
@@ -123,7 +135,8 @@ void testUpdatePriorities(const string &pqType)
 
 
 // Very basic testing.
-void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType) {
+void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
+{
     cout << "Testing priority queue: " << pqType << endl;
     
     pq->push(3);
@@ -146,13 +159,44 @@ void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType) {
 } // testPriorityQueue()
 
 
+
+
+// Test the unsorted heap's range-based constructor, copy constructor,
+// and operator=().
+//
+void testUnsortedPQ(Eecs281PQ<int> *pq, const string &pqType)
+{
+    cout << "Testing unsorted queue: " << pqType << endl;
+    
+    assert(pq->size() == 6);
+    assert(pq->top() == 87);
+    
+    pq->pop();
+    assert(pq->size() == 5);
+    assert(pq->top() == 65);
+    assert(!pq->empty());
+    
+    pq->pop();
+    assert(pq->size() == 4);
+    assert(!pq->empty());
+    
+    // TODO: Add more testing here!
+    
+    cout << "testUnsortedPQ() succeeded!" << endl;
+} // testPriorityQueue()
+
+
+
+
 // Test the pairing heap's range-based constructor, copy constructor,
 // and operator=().
 //
-void testPairing(vector<int> & vec) {
+void testPairing(vector<int> & vec)
+{
     cout << "Testing Pairing Heap separately" << endl;
     Eecs281PQ<int> * pq1 = new PairingPQ<int>(vec.begin(), vec.end());
     Eecs281PQ<int> * pq2 = new PairingPQ<int>(*((PairingPQ<int> *)pq1));
+    
     // This line is different just to show two different ways to declare a
     // pairing heap: as an Eecs281PQ and as a PairingPQ. Yay for inheritance!
     PairingPQ<int> * pq3 = new PairingPQ<int>();
@@ -178,10 +222,11 @@ void testPairing(vector<int> & vec) {
 } // testPairing()
 
 
-int main() {
+int main()
+{
     // Basic pointer, allocate a new PQ later based on user choice.
     Eecs281PQ<int> *pq;
-    vector<string> types{ "Unordered", "Sorted", "Binary", "Pairing" };
+    vector<string> types{ "Unordered", "Sorted", "Binary", "Pairing", "Unordered.2" };
     unsigned int choice;
     
     cout << "PQ tester" << endl << endl;
@@ -191,27 +236,51 @@ int main() {
     cout << "Select one: ";
     cin >> choice;
     
-    if (choice == 0) {
+    if (choice == 0)
+    {
         pq = new UnorderedPQ<int>;
     } // if
-    else if (choice == 1) {
+    else if (choice == 1)
+    {
         pq = new SortedPQ<int>;
     } // else if
-    else if (choice == 2) {
+    else if (choice == 2)
+    {
         pq = new BinaryPQ<int>;
     } // else if
-    else if (choice == 3) {
+    else if (choice == 3)
+    {
         pq = new PairingPQ<int>;
     } // else if
-    else {
+    else if (choice == 4)
+    {
+        vector<int> tester = {1,2,3,8,7,6,13,42,65,43,87,45,56,35,29};
+        
+        // send a subset = {6,...,45}
+        auto start = tester.begin() + 5;
+        auto end = tester.begin() + 11;
+        
+        pq = new UnorderedPQ<int>(start, end);
+    } // else if
+    else
+    {
         cout << "Unknown container!" << endl << endl;
         exit(1);
     } // else
     
-    testPriorityQueue(pq, types[choice]);
-    testUpdatePriorities(types[choice]);
+    if (choice >= 0 && choice <= 3)
+    {
+        testPriorityQueue(pq, types[choice]);
+        testUpdatePriorities(types[choice]);
+    }
     
-    if (choice == 3) {
+    if (choice == 4)
+    {
+        testUnsortedPQ(pq, types[choice]);
+    }
+    
+    if (choice == 3)
+    {
         vector<int> vec;
         vec.push_back(0);
         vec.push_back(1);

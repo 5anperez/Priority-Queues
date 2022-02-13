@@ -9,7 +9,8 @@
 
 // A specialized version of the 'heap' ADT implemented as a binary heap.
 template<typename TYPE, typename COMP_FUNCTOR = std::less<TYPE>>
-class BinaryPQ : public Eecs281PQ<TYPE, COMP_FUNCTOR> {
+class BinaryPQ : public Eecs281PQ<TYPE, COMP_FUNCTOR>
+{
     // This is a way to refer to the base class object.
     using BaseClass = Eecs281PQ<TYPE, COMP_FUNCTOR>;
 
