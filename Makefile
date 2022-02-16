@@ -28,7 +28,7 @@ UNIQNAME    = sanperez
 IDENTIFIER  = AD48FB4835AF347EB0CA8009E24C3B13F8519882
 
 # Change 'executable' to match the command name given in the project spec.
-EXECUTABLE  = galaxy
+EXECUTABLE  = testPQ
 
 # The following line looks for a project's main() in files named project*.cpp,
 # executable.cpp (substituted from EXECUTABLE above), or main.cpp
