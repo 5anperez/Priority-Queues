@@ -64,7 +64,8 @@ public:
     // Runtime: O(n) where n is number of elements in range.
     // TODO: when you implement this function, uncomment the parameter names.
     template<typename InputIterator>
-    PairingPQ(InputIterator start, InputIterator end, COMP_FUNCTOR comp = COMP_FUNCTOR()) :
+    PairingPQ(InputIterator start, InputIterator end,
+              COMP_FUNCTOR comp = COMP_FUNCTOR()) :
     BaseClass{ comp }, root{ nullptr }, numNodes{ 0 }
     {
         while (start != end)
@@ -81,6 +82,31 @@ public:
     PairingPQ(const PairingPQ &other) :
     BaseClass{ other.compare }, root{ other.root }, numNodes{ other.numNodes }
     {
+        // make a deque and insert root to other
+        std::deque<Node*> dq;
+        dq.push_back(root);
+        
+        while (!dq.empty())
+        {
+            // get the next element
+            Node *ptr = dq.front();
+            
+            // pop it because it will be deleted
+            dq.pop_front();
+            
+            // check for child and sibling
+            if (ptr->child)
+                dq.push_back(ptr->child);
+            
+            if (ptr->sibling)
+                dq.push_back(ptr->sibling);
+            
+            // I now have the current node's child and sibling in the deck
+            // waiting to get pushed. I push the current node first.
+            push(ptr->elt);
+        }
+        
+        
         // TODO: Implement this function.
         // NOTE: The structure does not have to be identical to the original,
         //       but it must still be a valid Pairing Heap.
@@ -90,10 +116,21 @@ public:
     // Description: Copy assignment operator.
     // Runtime: O(n)
     // TODO: when you implement this function, uncomment the parameter names.
-    PairingPQ &operator=(const PairingPQ &/*rhs*/) {
-        // TODO: Implement this function.
-        // HINT: Use the copy-swap method from the "Arrays and Containers" lecture.
+    PairingPQ &operator=(const PairingPQ &rhs)
+    {
+        // copy-swap method (idiot check not needed from now on)
+        
+        // use copy ctor to create a copy of the refrenced object on rhs
+        PairingPQ temp(rhs);
+        
+        // begin swapping the current objects (lhs) members with the copy's members
+        std::swap(temp.numNodes, numNodes);
+        std::swap(temp.root, root);
+        
+        // return a reference to myself to allow multiple assignments
+        // delete original, return copied object
         return *this;
+        
     } // operator=()
     
     
@@ -131,8 +168,44 @@ public:
     //              'rebuilds' the pairing heap by fixing the pairing heap invariant.
     //              You CANNOT delete 'old' nodes and create new ones!
     // Runtime: O(n)
-    virtual void updatePriorities() {
-        // TODO: Implement this function.
+    virtual void updatePriorities()
+    {
+        // same approach as copy ctor and dtor
+        
+        // create an aux deck
+        std::deque<Node*> dq;
+        dq.push_back(root->child);
+        
+        // while not empty we take something out
+        while (!dq.empty())
+        {
+            // get a starting point
+            Node *ptr = dq.front();
+            
+            // pop the start point
+            dq.pop_front();
+            
+            // add child and sibling if not null
+            if (ptr->sibling)
+            {
+                dq.push_back(ptr->sibling);
+                
+                // severe the relationship
+                ptr->sibling = nullptr;
+            }
+            if (ptr->child)
+            {
+                dq.push_back(ptr->child);
+                
+                // severe the relationship
+                ptr->child = nullptr;
+            }
+            
+            // now were ready to meld
+            root = meld(root, ptr);
+            
+        } // while()
+        
     } // updatePriorities()
     
     
@@ -170,6 +243,7 @@ public:
         }
         else if (size() == 1)
         {
+            temp->parent = nullptr;
             root = temp;
         }
         // not empty case
@@ -247,8 +321,68 @@ public:
     //
     // Runtime: As discussed in reading material.
     // TODO: when you implement this function, uncomment the parameter names.
-    void updateElt(Node* /*node*/, const TYPE &/*new_value*/) {
-        // TODO: Implement this function
+    void updateElt(Node* node, const TYPE &new_value)
+    {
+        // check for precondition
+        if (new_value > node->elt)
+        {
+            // update elt
+            node->elt = new_value;
+            
+            // three main cases:
+            // 1. node = root,
+            // 2. node != root & new_val < parent->elt (min work)
+            // 3. node != root & new_val > parent->elt (max work: two sub cases)
+            // 3a. node = leftmost (sever 2 links)
+            // 3b. node != leftmost (severe 3 links)
+            
+            // check for parent, roots dont have parents
+            if (node->parent)
+            {
+                // if the val is less than my parent, then no work needed
+                
+                // if val is greater, then need to correct the heap
+                if (new_value > node->parent->elt)
+                {
+                    // store the parent before i sever link
+                    Node *temp1 = node->parent;
+                    
+                    // check if I am leftmost
+                    if (node->parent->child == node)
+                    {
+                        // give the old root a new child, which is leftmost's sibling
+                        node->parent->child = node->sibling;
+                    }
+                    // check for prev, sibling, and parent, then sever 3 links
+                    else
+                    {
+                        // start at leftmost
+                        Node *temp2 = node->parent->child;
+                        
+                        // traverse until one before node
+                        while (temp2->sibling != node)
+                        {
+                            temp2 = temp2->sibling;
+                        }
+                        
+                        // sever the link
+                        temp2 = nullptr;
+                    }
+                    
+                    // check for sibling and parent, then sever 2 links
+                    node->parent = nullptr;
+                    node->sibling = nullptr;
+                    
+                    // ready to meld (if second level, then update root)
+                    if (temp1 == root)
+                        root = meld(temp1, node);
+                    else
+                        meld(temp1, node);
+                    
+                }
+            }
+        }
+        
     } // updateElt()
     
     
@@ -263,16 +397,17 @@ public:
     {
         // use the new keyword here to create the new node
         Node *newNode = new Node{ val };
-        numNodes++;
         
         // we have two cases: empty and size > 0
         
         // if empty: give it to root
         if (empty())
             root = newNode;
-        // otherwise meld it
-        else if (size() > 0)
+        else
+            // otherwise meld it
             root = meld(newNode, root);
+        
+        numNodes++;
         
         return root;
         
@@ -296,7 +431,6 @@ private:
             // return the bigger one
             return a;
         }
-        
         // are there children?
         if (b->child)
         {
@@ -326,7 +460,7 @@ private:
     //       should be declared inside of member functions as needed.
     
     Node *root;
-    int numNodes;
+    size_t numNodes;
     
 };
 

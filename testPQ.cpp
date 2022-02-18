@@ -268,11 +268,8 @@ int main()
         exit(1);
     } // else
     
-    if (choice >= 0 && choice <= 3)
-    {
-        testPriorityQueue(pq, types[choice]);
-        testUpdatePriorities(types[choice]);
-    }
+    testPriorityQueue(pq, types[choice]);
+    testUpdatePriorities(types[choice]);
     
     if (choice == 4)
     {
