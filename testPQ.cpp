@@ -59,10 +59,10 @@ void testHiddenData(const string &pqType)
     
     struct HiddenDataComp
     {
-        bool operator()(const HiddenData &/*a*/, const HiddenData &/*b*/) const
+        bool operator()(const HiddenData &a, const HiddenData &b) const
         {
-            // TODO: Finish this functor; when you do, uncomment the
-            // parameters in the line above
+            if (a.data < b.data)
+                return true;
             return false;
         }
     };
@@ -81,6 +81,12 @@ void testUpdatePrioritiesHelper(Eecs281PQ<int *, IntPtrComp> *pq)
     data.reserve(100);
     data.push_back(1);
     data.push_back(5);
+    data.push_back(4);
+    data.push_back(9);
+    data.push_back(2);
+    data.push_back(3);
+    data.push_back(80);
+    data.push_back(90);
     
     // NOTE: If you add more data to the vector, don't push the pointers
     // until AFTER the vector stops changing size!  Think about why.
@@ -94,7 +100,10 @@ void testUpdatePrioritiesHelper(Eecs281PQ<int *, IntPtrComp> *pq)
     // Change the first value (which is pointed to by the pq), and check it.
     data[0] = 10;
     pq->updatePriorities();
-    assert(*pq->top() == 10);
+    assert(*pq->top() == 90);
+    
+    
+    
 } // testUpdatePrioritiesHelper()
 
 
@@ -154,6 +163,16 @@ void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
     assert(pq->empty());
     
     // TODO: Add more testing here!
+    pq->push(18);
+    pq->push(81);
+    pq->push(42);
+    assert(pq->top() == 81);
+    pq->pop();
+    assert(pq->top() == 42);
+    pq->pop();
+    assert(pq->top() == 18);
+    
+    
     
     cout << "testPriorityQueue() succeeded!" << endl;
 } // testPriorityQueue()
@@ -197,6 +216,9 @@ void testPairing(vector<int> & vec)
     Eecs281PQ<int> * pq1 = new PairingPQ<int>(vec.begin(), vec.end());
     Eecs281PQ<int> * pq2 = new PairingPQ<int>(*((PairingPQ<int> *)pq1));
     
+//    PairingPQ pq1 {vec.cbegin(), vec.cend()};
+//    PairingPQ pq2 {pq1};
+    
     // This line is different just to show two different ways to declare a
     // pairing heap: as an Eecs281PQ and as a PairingPQ. Yay for inheritance!
     PairingPQ<int> * pq3 = new PairingPQ<int>();
@@ -204,14 +226,35 @@ void testPairing(vector<int> & vec)
     
     pq1->push(3);
     pq2->pop();
-    assert(pq1->size() == 3);
+    assert(pq1->size() == 3); // 0,1,3
     assert(!pq1->empty());
     assert(pq1->top() == 3);
     pq2->push(pq3->top());
     assert(pq2->top() == pq3->top());
     
-    cout << "Basic tests done." << endl;
+    cout << "Basic tests done!" << endl;
+    
     // TODO: Add more code to test addNode(), updateElt(), etc.
+    pq1->push(69);
+    pq1->push(6);
+    pq1->push(9);
+    pq1->push(15);
+    pq1->push(14);
+    assert(pq1->top() == 69);
+    pq1->pop();
+    assert(pq1->top() == 15);
+    pq1->pop();
+    assert(pq1->top() == 14);
+    pq1->push(99);
+    assert(pq1->top() == 99);
+    pq1->pop();
+    assert(pq1->top() == 14);
+    pq1->pop();
+    assert(pq1->top() == 9);
+    pq1->pop();
+    assert(pq1->top() == 6);
+    pq1->push(2);
+    
     
     cout << "Calling destructors" << endl;
     delete pq1;
@@ -270,6 +313,7 @@ int main()
     
     testPriorityQueue(pq, types[choice]);
     testUpdatePriorities(types[choice]);
+    testHiddenData(types[choice]);
     
     if (choice == 4)
     {

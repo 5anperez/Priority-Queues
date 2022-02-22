@@ -34,7 +34,7 @@ EXECUTABLE  = testPQ
 # executable.cpp (substituted from EXECUTABLE above), or main.cpp
 PROJECTFILE = $(or $(wildcard project*.cpp $(EXECUTABLE).cpp), main.cpp)
 # If main() is in another file delete line above, edit and uncomment below
-#PROJECTFILE = mymainfile.cpp
+#PROJECTFILE = testPQ.cpp
 #######################
 # TODO (end) #
 #######################

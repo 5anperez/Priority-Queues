@@ -30,7 +30,7 @@ public:
         // There are two versions, getElt() and a dereference operator, use
         // whichever one seems more natural to you.
         // Runtime: O(1) - this has been provided for you.
-        //const TYPE &getElt() const { return elt; }
+        const TYPE &getElt() const { return elt; }
         const TYPE &operator*() const { return elt; }
         
         // The following line allows you to access any private data members of this
@@ -80,11 +80,11 @@ public:
     // Description: Copy constructor.
     // Runtime: O(n)
     PairingPQ(const PairingPQ &other) :
-    BaseClass{ other.compare }, root{ other.root }, numNodes{ other.numNodes }
+    BaseClass{ other.compare }, root{ nullptr }, numNodes{ 0 }
     {
         // make a deque and insert root to other
         std::deque<Node*> dq;
-        dq.push_back(root);
+        dq.push_back(other.root);
         
         while (!dq.empty())
         {
@@ -140,6 +140,12 @@ public:
     {
         // make a deque and insert root
         std::deque<Node*> dq;
+        
+        if (!root)
+        {
+            return;
+        }
+        
         dq.push_back(root);
         
         while (!dq.empty())
@@ -152,14 +158,20 @@ public:
             
             // check for child and sibling
             if (ptr->child)
+            {
                 dq.push_back(ptr->child);
-            
+            }
+                
             if (ptr->sibling)
+            {
                 dq.push_back(ptr->sibling);
+            }
             
             // delete the current node
             delete ptr;
         }
+        
+        numNodes = 0;
         
     } // ~PairingPQ()
     
@@ -170,11 +182,10 @@ public:
     // Runtime: O(n)
     virtual void updatePriorities()
     {
-        // same approach as copy ctor and dtor
-        
         // create an aux deck
         std::deque<Node*> dq;
         dq.push_back(root->child);
+        root->child = nullptr;
         
         // while not empty we take something out
         while (!dq.empty())
@@ -187,22 +198,17 @@ public:
             
             // add child and sibling if not null
             if (ptr->sibling)
-            {
                 dq.push_back(ptr->sibling);
-                
-                // severe the relationship
-                ptr->sibling = nullptr;
-            }
             if (ptr->child)
-            {
                 dq.push_back(ptr->child);
-                
-                // severe the relationship
-                ptr->child = nullptr;
-            }
+            
+            // severe the relationship
+            ptr->parent = nullptr;
+            ptr->child = nullptr;
+            ptr->sibling = nullptr;
             
             // now were ready to meld
-            root = meld(root, ptr);
+            root = meld(ptr, root);
             
         } // while()
         
@@ -230,6 +236,9 @@ public:
     {
         // placeholder
         Node *temp = root->child;
+        
+        // set child to null as well
+        root->child = nullptr;
         
         // pop the root
         delete root;
@@ -273,10 +282,14 @@ public:
                 // meld two elements and push them to back
                dq.push_back(meld(dq[index], dq[index + 1]));
                     
-                // pop them
+                // pop the ones that were just melded
                 dq.pop_front();
                 dq.pop_front();
             }
+            
+            // heap restored
+            root = dq.front();
+            dq.pop_front();
         }
         
     } // pop()
@@ -320,11 +333,13 @@ public:
     //               (as defined by comp) than the old priority.
     //
     // Runtime: As discussed in reading material.
-    // TODO: when you implement this function, uncomment the parameter names.
-    void updateElt(Node* node, const TYPE &new_value)
+    
+    // TAKE THE VIRTUAL OUT!!!!
+    
+    virtual void updateElt(Node* node, const TYPE &new_value)
     {
         // check for precondition
-        if (new_value > node->elt)
+        if (this->compare(node->elt, new_value))
         {
             // update elt
             node->elt = new_value;
@@ -342,7 +357,7 @@ public:
                 // if the val is less than my parent, then no work needed
                 
                 // if val is greater, then need to correct the heap
-                if (new_value > node->parent->elt)
+                if (this->compare(node->parent->elt, new_value))
                 {
                     // store the parent before i sever link
                     Node *temp1 = node->parent;
@@ -377,7 +392,7 @@ public:
                     if (temp1 == root)
                         root = meld(temp1, node);
                     else
-                        meld(temp1, node);
+                        meld(temp1, node); // WHY DONT I SET THE ROOT HERE????
                     
                 }
             }
@@ -400,11 +415,10 @@ public:
         
         // we have two cases: empty and size > 0
         
-        // if empty: give it to root
-        if (empty())
+        
+        if (empty()) // give it to root
             root = newNode;
-        else
-            // otherwise meld it
+        else        // meld it
             root = meld(newNode, root);
         
         numNodes++;
@@ -416,53 +430,83 @@ public:
     
 private:
     
-    // Puts two non null heaps together: root a and root b
+    // links two non null heaps: root a and root b (b is always the curr root)
     // these roots must not have a parent or siblings
     Node* meld(Node *a, Node *b)
     {
         // get extreme
-        if (this->compare(b->elt, a->elt) ||
-            (!this->compare(b->elt, a->elt) && !this->compare(a->elt, b->elt)))
+        if (this->compare(b->elt, a->elt))
         {
-            // if a duplicate, or a is higher priority, then its the root
-            a->child = b;
+            // give b a new parent and sibling
             b->parent = a;
+            b->sibling = a->child;
             
-            // return the bigger one
+            // give a a new child
+            a->child = b;
+            
+            // return the larger one
             return a;
         }
-        // are there children?
-        if (b->child)
-        {
-            // store the child
-            Node *temp = b->child;
-            
-            // give b a new child (put it to the left)
-            b->child = a;
-            
-            // give a a new sibling and parent
-            a->sibling = temp;
-            a->parent = b;
-        }
-        else
-        {
-            b->child = a;
-            a->parent = b;
-        }
+        
+        // give a a new parent and sibling
+        a->parent = b;
+        a->sibling = b->child;
+        
+        // give b a new child
+        b->child = a;
         
         // return the larger one
         return b;
         
     } // meld()
     
-    // NOTE: For member variables, you are only allowed to add a "root pointer"
-    //       and a "count" of the number of nodes.  Anything else (such as a deque)
-    //       should be declared inside of member functions as needed.
-    
+    // root of heap and size
     Node *root;
     size_t numNodes;
     
 };
-
+//            if (a->child)
+//            {
+//                // store the child
+//                Node *temp = a->child;
+//
+//                // give a a new child (put it to the left)
+//                a->child = b;
+//
+//                // give b a new sibling and parent
+//                b->sibling = temp;
+//                b->parent = a;
+//
+//                // make sure b's parent is still a
+//                b->sibling->parent = a;
+//            }
+//            else
+//            {
+//                // if a duplicate, or a is higher priority, then its the root
+//                a->child = b;
+//                b->parent = a;
+//            }
+//        // b > a
+//        // are there children?
+//        if (b->child)
+//        {
+//            // store the child
+//            Node *temp = b->child;
+//
+//            // give b a new child (put it to the left)
+//            b->child = a;
+//
+//            // give a a new sibling and parent
+//            a->sibling = temp;
+//            a->parent = b;
+//
+//            // make sure a's parent is still b
+//            a->sibling->parent = b;
+//        }
+//        else
+//        {
+//            b->child = a;
+//            a->parent = b;
+//        }
 
 #endif // PAIRINGPQ_H
