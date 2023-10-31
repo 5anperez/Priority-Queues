@@ -79,6 +79,7 @@ void testUpdatePrioritiesHelper(Eecs281PQ<int *, IntPtrComp> *pq)
 {
     vector<int> data;
     data.reserve(100);
+    data.push_back(100);
     data.push_back(1);
     data.push_back(5);
     data.push_back(4);
@@ -101,6 +102,12 @@ void testUpdatePrioritiesHelper(Eecs281PQ<int *, IntPtrComp> *pq)
     data[0] = 10;
     pq->updatePriorities();
     assert(*pq->top() == 90);
+    data[1] = 200;
+    pq->updatePriorities();
+    assert(*pq->top() == 200);
+    data[0] = 30000;
+    pq->updatePriorities();
+    assert(*pq->top() == 3000);
     
     
     
@@ -235,25 +242,28 @@ void testPairing(vector<int> & vec)
     cout << "Basic tests done!" << endl;
     
     // TODO: Add more code to test addNode(), updateElt(), etc.
-    pq1->push(69);
-    pq1->push(6);
-    pq1->push(9);
+    pq1->push(45);
+    pq1->push(7);
+    pq1->push(1);
     pq1->push(15);
-    pq1->push(14);
-    assert(pq1->top() == 69);
+    pq1->push(12);
+    assert(pq1->top() == 45);
     pq1->pop();
     assert(pq1->top() == 15);
     pq1->pop();
-    assert(pq1->top() == 14);
-    pq1->push(99);
-    assert(pq1->top() == 99);
+    assert(pq1->top() == 12);
+    pq1->push(45);
+    assert(pq1->top() == 45);
+    pq1->push(45);
+    pq1->push(45);
+    pq1->push(30);
+    assert(pq1->top() == 45);
+    pq1->push(33);
+    pq1->push(20);
     pq1->pop();
-    assert(pq1->top() == 14);
     pq1->pop();
-    assert(pq1->top() == 9);
     pq1->pop();
-    assert(pq1->top() == 6);
-    pq1->push(2);
+    assert(pq1->top() == 33);
     
     
     cout << "Calling destructors" << endl;

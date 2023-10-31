@@ -42,8 +42,6 @@ public:
         TYPE elt;
         Node *child;
         Node *sibling;
-        
-        // TODO: Add one extra pointer (parent or previous) as desired.
         Node *parent;
         
         
@@ -54,15 +52,12 @@ public:
     // Runtime: O(1)
     explicit PairingPQ(COMP_FUNCTOR comp = COMP_FUNCTOR()) :
     BaseClass{ comp }, root{ nullptr }, numNodes{ 0 }
-    {
-        // TODO: Implement this function.
-    } // PairingPQ()
+    {} // PairingPQ()
     
     
     // Description: Construct a pairing heap out of an iterator range with an optional
     //              comparison functor.
     // Runtime: O(n) where n is number of elements in range.
-    // TODO: when you implement this function, uncomment the parameter names.
     template<typename InputIterator>
     PairingPQ(InputIterator start, InputIterator end,
               COMP_FUNCTOR comp = COMP_FUNCTOR()) :
@@ -106,10 +101,6 @@ public:
             push(ptr->elt);
         }
         
-        
-        // TODO: Implement this function.
-        // NOTE: The structure does not have to be identical to the original,
-        //       but it must still be a valid Pairing Heap.
     } // PairingPQ()
     
     
@@ -127,8 +118,6 @@ public:
         std::swap(temp.numNodes, numNodes);
         std::swap(temp.root, root);
         
-        // return a reference to myself to allow multiple assignments
-        // delete original, return copied object
         return *this;
         
     } // operator=()
@@ -142,9 +131,7 @@ public:
         std::deque<Node*> dq;
         
         if (!root)
-        {
             return;
-        }
         
         dq.push_back(root);
         
@@ -158,14 +145,10 @@ public:
             
             // check for child and sibling
             if (ptr->child)
-            {
                 dq.push_back(ptr->child);
-            }
                 
             if (ptr->sibling)
-            {
                 dq.push_back(ptr->sibling);
-            }
             
             // delete the current node
             delete ptr;
@@ -204,7 +187,7 @@ public:
             
             // severe the relationship
             ptr->parent = nullptr;
-            ptr->child = nullptr;
+            //ptr->child = nullptr;
             ptr->sibling = nullptr;
             
             // now were ready to meld
@@ -333,10 +316,7 @@ public:
     //               (as defined by comp) than the old priority.
     //
     // Runtime: As discussed in reading material.
-    
-    // TAKE THE VIRTUAL OUT!!!!
-    
-    virtual void updateElt(Node* node, const TYPE &new_value)
+    void updateElt(Node* node, const TYPE &new_value)
     {
         // check for precondition
         if (this->compare(node->elt, new_value))
