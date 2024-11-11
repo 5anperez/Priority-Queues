@@ -1,5 +1,3 @@
-// Project identifier: AD48FB4835AF347EB0CA8009E24C3B13F8519882
-
 #ifndef SORTEDPQ_H
 #define SORTEDPQ_H
 
@@ -31,11 +29,7 @@ public:
     // Runtime: O(n log n) where n is number of elements in range.
     template<typename InputIterator>
     SortedPQ(InputIterator start, InputIterator end, COMP_FUNCTOR comp = COMP_FUNCTOR()) : BaseClass{ comp }, data{ start, end }
-    {
-        // sort the vector with updatePriority()
-        updatePriorities();
-        
-    } // SortedPQ
+    { updatePriorities(); } // SortedPQ
 
 
     // Description: Destructor doesn't need any code, the data vector will
@@ -46,15 +40,16 @@ public:
 
     // Description: Add a new element to the heap.
     // Runtime: O(n)
-    // TODO: When you implement this function, uncomment the parameter names.
+    /*
+        lower_bound returns an iterator pointing to the first element in the range [first, last) that is not less than (i.e., greater or equal to) the value specified. If all elements in the range are less than the specified value, the function returns an iterator to the end of the range.
+    */
     virtual void push(const TYPE &val)
     {
-        // find the last place val should go
+        // Find the last place val should go
         auto index = std::lower_bound(data.begin(), data.end(), val, this->compare);
         
         // insert val at its lower bound
-        data.insert(index, val);
-        
+        data.insert(index, val);        
     } // push()
 
 
@@ -67,7 +62,6 @@ public:
     virtual void pop()
     {
         data.pop_back();
-        
     } // pop()
 
 
@@ -79,7 +73,6 @@ public:
     virtual const TYPE &top() const
     {
         return data.back();
-        
     } // top()
 
 
@@ -89,7 +82,6 @@ public:
     virtual std::size_t size() const
     {
         return data.size();
-        
     } // size()
 
 
@@ -99,7 +91,6 @@ public:
     virtual bool empty() const
     {
         return data.empty();
-        
     } // empty()
 
 
@@ -110,14 +101,12 @@ public:
     {
         // sort the vector
         sort(data.begin(), data.end(), this->compare);
-        
     } // updatePriorities()
 
 
 private:
     // priority queue's underlying container
     std::vector<TYPE> data;
-
 }; // SortedPQ
 
 #endif // SORTEDPQ_H

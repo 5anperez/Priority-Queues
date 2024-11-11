@@ -1,4 +1,10 @@
-// Project identifier: AD48FB4835AF347EB0CA8009E24C3B13F8519882
+/*
+
+    The base class from which all subsequent priority queue classes are derived from. E.g., SortedPQ is a templated class which inherits from this base templated class. This creates a dependent context, therefore, we must always specify this->compare, not just compare.
+
+*/
+
+
 
 #ifndef EECS281_PQ_H
 #define EECS281_PQ_H

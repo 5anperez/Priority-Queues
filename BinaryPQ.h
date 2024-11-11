@@ -1,4 +1,24 @@
-// Project identifier: AD48FB4835AF347EB0CA8009E24C3B13F8519882
+//  BinaryPQ.h
+//  p2b-priority-queues
+//
+//  Created by Santiago S. Perez on 2/23/22.
+//
+
+
+
+
+/*
+
+    Refer to the heaps lecture slides to find more useful theory information. 
+    
+    ** However, note that the heap sort portion is irrelevant. ** 
+
+    Here we are simply using the low-level binary heap to create the abstract binary PQ.
+
+*/
+
+
+
 
 #ifndef BINARYPQ_H
 #define BINARYPQ_H
@@ -8,7 +28,8 @@
 #include <utility>
 #include "Eecs281PQ.h"
 
-// A specialized version of the 'heap' ADT implemented as a binary heap.
+// A specialized version of the 'heap' ADT 
+// (abstract data type) implemented as a binary heap.
 template<typename TYPE, typename COMP_FUNCTOR = std::less<TYPE>>
 class BinaryPQ : public Eecs281PQ<TYPE, COMP_FUNCTOR>
 {
@@ -21,23 +42,16 @@ public:
     // Runtime: O(1)
     explicit BinaryPQ(COMP_FUNCTOR comp = COMP_FUNCTOR()) :
         BaseClass{ comp }
-    {
-        // TODO: Implement this function.
-    } // BinaryPQ
+    { } // BinaryPQ
 
 
     // Description: Construct a heap out of an iterator range with an optional
     //              comparison functor.
     // Runtime: O(n) where n is number of elements in range.
-    // TODO: when you implement this function, uncomment the parameter names.
     template<typename InputIterator>
     BinaryPQ(InputIterator start, InputIterator end,
              COMP_FUNCTOR comp = COMP_FUNCTOR()) : BaseClass{ comp }, data{ start, end }
-    {
-        
-        updatePriorities();
-        
-    } // BinaryPQ
+    { updatePriorities(); } // BinaryPQ
 
 
     // Description: Destructor doesn't need any code, the data vector will
@@ -47,23 +61,19 @@ public:
 
 
     // Description: Assumes that all elements inside the heap are out of order and
-    //              'rebuilds' the heap by fixing the heap invariant.
+    //              'rebuilds' the heap by fixing the heap invariant, i.e., the heapify approach.
     // Runtime: O(n)
     virtual void updatePriorities()
     {
         // heapify: proceed from bottom, repeatidly calling fixDown()
         // no need calling it on leaves
         for (size_t i = (size() / 2); i >= 1; i--)
-        {
             fixDown(i);
-        }
-        
     } // updatePriorities()
 
 
     // Description: Add a new element to the heap.
     // Runtime: O(log(n))
-    // TODO: when you implement this function, uncomment the parameter names.
     virtual void push(const TYPE &val)
     {
         // insert val at the back
@@ -71,15 +81,13 @@ public:
         
         // call fixUp() on the last element
         fixUp(data.size());
-        
     } // push()
 
 
     // Description: Remove the most extreme (defined by 'compare') element from
     //              the heap.
-    // Note: We will not run tests on your code that would require it to pop an
-    // element when the heap is empty. Though you are welcome to if you are
-    // familiar with them, you do not need to use exceptions in this project.
+    // Note: Do not run tests on your code that would require it to pop an
+    // element when the heap is empty. Unless you are familiar with them.
     // Runtime: O(log(n))
     virtual void pop()
     {
@@ -91,19 +99,17 @@ public:
         
         // call fixDown() with the roots index
         fixDown(1);
-        
     } // pop()
 
 
     // Description: Return the most extreme (defined by 'compare') element of
-    //              the heap.  This should be a reference for speed.  It MUST be
+    //              the heap. This should be a reference for speed. It MUST be
     //              const because we cannot allow it to be modified, as that
     //              might make it no longer be the most extreme element.
     // Runtime: O(1)
     virtual const TYPE &top() const
     {
         return getElement(1);
-    
     } // top()
 
 
@@ -112,7 +118,6 @@ public:
     virtual std::size_t size() const
     {
         return data.size();
-        
     } // size()
 
 
@@ -121,19 +126,12 @@ public:
     virtual bool empty() const
     {
         return data.empty();
-        
     } // empty()
 
 
 private:
-    // Note: This vector *must* be used for your heap implementation.
+    // Under the hood data structure.
     std::vector<TYPE> data;
-    // NOTE: You are not allowed to add any member variables.  You don't need
-    //       a "heapSize", since you can call your own size() member function,
-    //       or check data.size().
-
-    // TODO: Add any additional member functions or data you require here.
-    //       For instance, you might add fixUp() and fixDown().
     
     // Description: fixes tree if a priority has increased.
     // Runtime: O(log n)
@@ -141,7 +139,8 @@ private:
     {
         // keep looping and swapping while we are not at the root
         // and while my parents priority is less than mine
-        while (index != 1 && this->compare(getElement(index / 2), getElement(index)))
+        while ((index != 1) && 
+                (this->compare(getElement(index / 2), getElement(index))))
         {
             std::swap(getElement(index), getElement(index / 2));
             

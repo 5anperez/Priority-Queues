@@ -1,5 +1,3 @@
-// Project identifier: AD48FB4835AF347EB0CA8009E24C3B13F8519882
-
 #ifndef PAIRINGPQ_H
 #define PAIRINGPQ_H
 
@@ -21,7 +19,7 @@ public:
     {
     public:
         
-        // node ctor
+        // Node ctor
         explicit Node(const TYPE &val)
         : elt{ val }, child{ nullptr }, sibling{ nullptr }, parent{ nullptr }
         {}
@@ -33,8 +31,8 @@ public:
         const TYPE &getElt() const { return elt; }
         const TYPE &operator*() const { return elt; }
         
-        // The following line allows you to access any private data members of this
-        // Node class from within the PairingPQ class. (ie: myNode.elt is a legal
+        // To access any private data members of this Node class 
+        // from within the PairingPQ class. (ie: myNode.elt is a legal
         // statement in PairingPQ's add_node() function).
         friend PairingPQ;
         
@@ -43,7 +41,6 @@ public:
         Node *child;
         Node *sibling;
         Node *parent;
-        
         
     }; // Node
     
@@ -106,7 +103,6 @@ public:
     
     // Description: Copy assignment operator.
     // Runtime: O(n)
-    // TODO: when you implement this function, uncomment the parameter names.
     PairingPQ &operator=(const PairingPQ &rhs)
     {
         // copy-swap method (idiot check not needed from now on)
@@ -199,21 +195,20 @@ public:
     
     
     // Description: Add a new element to the pairing heap. This is already done.
-    //              You should implement push functionality entirely in the addNode()
-    //              function, and this function calls addNode().
+    //              Push functionality is implemented entirely in the addNode()
+    //              function, which this function calls.
     // Runtime: O(1)
     virtual void push(const TYPE &val)
     {
         addNode(val);
-        
     } // push()
     
     
     // Description: Remove the most extreme (defined by 'compare') element from
     //              the pairing heap.
-    // Note: We will not run tests on your code that would require it to pop an
-    // element when the pairing heap is empty. Though you are welcome to if you are
-    // familiar with them, you do not need to use exceptions in this project.
+    // Note: Do not run tests on your code that would require it to pop an
+    // element when the pairing heap is empty. Unless you are familiar with 
+    // them, you do not need to use exceptions in this project.
     // Runtime: Amortized O(log(n))
     virtual void pop()
     {
