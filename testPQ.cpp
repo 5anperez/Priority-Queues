@@ -1,5 +1,3 @@
-// Project identifier: AD48FB4835AF347EB0CA8009E24C3B13F8519882
-
 /*
  * Compile this test against your .h files to make sure they compile. Note how
  * the eecs281 priority queues can be constructed with the different types. We
@@ -37,21 +35,24 @@ using namespace std;
 
 /*
 
-    Note that I can define the data type that will be compared, how to compare, and the type of data inside the pq. Below is two ways to create a custom comparator. The 1st uses a struct and the 2nd uses a lambda.
+    Note that I can define the data type that will be compared from the perspective of the class (typename) and the container (datatype). I can also define how to compare, i.e., define what "priority" means, which is with a custom comparator (COMP_FUNCTOR). Below is two ways to create a custom comparator. The 1st uses a struct and the 2nd uses a lambda, which sets it to a variable name just for demo.
 
 */
 
-
-// Used to test a min-heap like priority queue containing doubles.
-struct DescendingComp
+// 1. Create the functor via struct.
+// Used to test a min-heap type priority queue containing doubles.
+struct DescendingComp1
 {
     // Prioritizes smaller doubles.
     bool operator()(double a, double b) const
     { return a > b; }
 };
 
+// 2. Creat the functor via lambda.
+// Used to test a min-heap type priority queue containing doubles.
 auto DescendingComp2 = [](double a, double b) 
 {
+    // Prioritizes smaller doubles.
     return a > b;
 };
 
@@ -82,6 +83,11 @@ struct IntPtrComp
     { return *a < *b; }
 };
 
+
+
+
+
+
 // modify the pointer comp to work with hidden data!!!!!
 // TODO: Make sure that you're using this->compare() properly, and everywhere
 // that you should.  Complete this function by adding a functor that compares
@@ -97,6 +103,7 @@ void testHiddenData(const string &pqType)
         HiddenData(int d) : data(d) {}
         HiddenData(double dec) : dec_data(dec) {}
     };
+
     
     // Basic max-heap functionality.
     struct HiddenDataMaxHeap
@@ -105,12 +112,14 @@ void testHiddenData(const string &pqType)
             { return (a.data < b.data); }
     };
 
+
     // Prioritize doubles with respect to absolute values.
     struct HDAbsComparator 
     {
         bool operator()(const HiddenData &a, const HiddenData &b) const 
         { return fabs(a.dec_data) < fabs(b.dec_data); }
     };
+
 
     // Introduce "thresholded" comparisons, where small differences are treated as equal.
     struct HDThresholdComparator 
@@ -122,6 +131,7 @@ void testHiddenData(const string &pqType)
             return (fabs(result) > threshold) ? (result) : false;
         }
     };
+
 
     // Prioritize odd numbers over even numbers, then compare by value.
     struct OddFirstComp 
@@ -136,6 +146,7 @@ void testHiddenData(const string &pqType)
         }
     };
 
+
     // Prioritize integers with respect to absolute values.
     struct AbsValueComp 
     {
@@ -143,9 +154,11 @@ void testHiddenData(const string &pqType)
         { return std::abs(a.data) < std::abs(b.data); }
     };
 
+
     // Order by the last digit
     auto customComp = [](const HiddenData &a, const HiddenData &b) 
     { return (a.data % 10) < (b.data % 10); };
+
     
     cout << "Testing " << pqType << " with hidden data" << endl;
     
@@ -157,86 +170,200 @@ void testHiddenData(const string &pqType)
 
     // Would it make sense or be a good test to create a simple unordered pq w/ the hidden type and no custom comparator, or does that defeat the purpose?
 
-    // Create a simple sorted pq w/ the hidden type and comparator.
-    SortedPQ<HiddenData, HiddenDataMaxHeap> pq;
+    if (pqType == "Sorted")
+    {
+        // Create a simple sorted pq w/ the hidden type and comparator.
+        SortedPQ<HiddenData, HiddenDataMaxHeap> pq;
 
-    // Populate the pq
-    pq.push(HiddenData(5));
-    pq.push(HiddenData(10));
-    pq.push(HiddenData(3));
+        // Populate the pq
+        pq.push(HiddenData(5));
+        pq.push(HiddenData(10));
+        pq.push(HiddenData(3));
 
-    // Verify size and top element.
-    assert(pq.size() == 3);
-    assert(pq.top().data == 10);
+        // Verify size and top element.
+        assert(pq.size() == 3);
+        assert(pq.top().data == 10);
 
-    // Pop and check remaining elements
-    pq.pop();
-    assert(pq.top().data == 5);
-    pq.pop();
-    assert(pq.top().data == 3);
-    pq.pop();
-    assert(pq.empty());
+        // Pop and check remaining elements
+        pq.pop();
+        assert(pq.top().data == 5);
+        pq.pop();
+        assert(pq.top().data == 3);
+        pq.pop();
+        assert(pq.empty());
 
-    SortedPQ<HiddenData, HDAbsComparator> pq2;
-    pq2.push(HiddenData(-10.5));
-    pq2.push(HiddenData(5.2));
-    pq2.push(HiddenData(-3.3));
+        SortedPQ<HiddenData, HDAbsComparator> pq2;
+        pq2.push(HiddenData(-10.5));
+        pq2.push(HiddenData(5.2));
+        pq2.push(HiddenData(-3.3));
 
-    assert(pq2.top().dec_data == -10.5); // Largest absolute decimal
-    pq2.pop();
-    assert(pq2.top().dec_data == 5.2);
-
-
-
-    SortedPQ<HiddenData, HDThresholdComparator> pq3;
-    pq3.push(HiddenData(1.001));
-    pq3.push(HiddenData(1.002));
-    pq3.push(HiddenData(1.020));
-
-    assert(pq3.top().dec_data == 1.020); 
-    pq3.pop();
-    assert(pq3.top().dec_data == 1.001);
-    pq3.pop();
-    pq3.pop();
-    assert(pq3.empty());
-
-
-    // Odds before evens
-    SortedPQ<HiddenData, OddFirstComp> pq4;
-    pq4.push(HiddenData(4));
-    pq4.push(HiddenData(1));
-    pq4.push(HiddenData(3));
-    pq4.push(HiddenData(2));
-
-    assert(pq4.top().data == 1); 
-    pq4.pop();
-    assert(pq4.top().data == 3);
-    pq4.pop();
-    pq4.pop();
-    assert(pq4.empty());
+        assert(pq2.top().dec_data == -10.5); // Largest absolute decimal
+        pq2.pop();
+        assert(pq2.top().dec_data == 5.2);
 
 
 
-    // Order by the last digit
-    SortedPQ<HiddenData, decltype(customComp)> pqL(customComp);
-    pqL.push(HiddenData(12));
-    pqL.push(HiddenData(25));
-    pqL.push(HiddenData(13));
-    pqL.push(HiddenData(7));
+        SortedPQ<HiddenData, HDThresholdComparator> pq3;
+        pq3.push(HiddenData(1.001));
+        pq3.push(HiddenData(1.002));
+        pq3.push(HiddenData(1.020));
 
-    assert(pqL.top().data == 7);
-    pqL.pop();
-    assert(pqL.top().data == 25);
-    pqL.pop();
-    assert(pqL.top().data == 13);
-    pqL.pop();
-    assert(pqL.top().data == 12);
-    pqL.pop();
-    assert(pqL.empty());
+        assert(pq3.top().dec_data == 1.020); 
+        pq3.pop();
+        assert(pq3.top().dec_data == 1.001);
+        pq3.pop();
+        pq3.pop();
+        assert(pq3.empty());
+
+
+        // Odds before evens
+        SortedPQ<HiddenData, OddFirstComp> pq4;
+        pq4.push(HiddenData(4));
+        pq4.push(HiddenData(1));
+        pq4.push(HiddenData(3));
+        pq4.push(HiddenData(2));
+
+        assert(pq4.top().data == 1); 
+        pq4.pop();
+        assert(pq4.top().data == 3);
+        pq4.pop();
+        pq4.pop();
+        assert(pq4.empty());
+
+
+
+        // Order by the last digit
+        SortedPQ<HiddenData, decltype(customComp)> pqL(customComp);
+        pqL.push(HiddenData(12));
+        pqL.push(HiddenData(25));
+        pqL.push(HiddenData(13));
+        pqL.push(HiddenData(7));
+
+        assert(pqL.top().data == 7);
+        pqL.pop();
+        assert(pqL.top().data == 25);
+        pqL.pop();
+        assert(pqL.top().data == 13);
+        pqL.pop();
+        assert(pqL.top().data == 12);
+        pqL.pop();
+        assert(pqL.empty());
+    }
+    else if (pqType == "Pairing")
+    {
+        cout << "Testing " << pqType << " with custom functors...\n" << endl;
+        // Create a simple sorted pq w/ the hidden type and comparator.
+        PairingPQ<HiddenData, HiddenDataMaxHeap> pq;
+
+        // Populate the pq
+        pq.push(HiddenData(5));
+        pq.push(HiddenData(10));
+        pq.push(HiddenData(3));
+
+        // Verify size and top element.
+        assert(pq.size() == 3);
+        assert(pq.top().data == 10);
+
+        // Pop and check remaining elements
+        pq.pop();
+        assert(pq.top().data == 5);
+        pq.pop();
+        assert(pq.top().data == 3);
+        pq.pop();
+        assert(pq.empty());
+
+
+
+        PairingPQ<HiddenData, HDAbsComparator> pq2;
+        pq2.push(HiddenData(-10.5));
+        pq2.push(HiddenData(5.2));
+        pq2.push(HiddenData(-3.3));
+
+        assert(pq2.top().dec_data == -10.5); // Largest absolute decimal
+        pq2.pop();
+        assert(pq2.top().dec_data == 5.2);
+
+
+
+        PairingPQ<HiddenData, HDThresholdComparator> pq3;
+        pq3.push(HiddenData(1.001));
+        pq3.push(HiddenData(1.002));
+        pq3.push(HiddenData(1.020));
+
+        assert(pq3.top().dec_data == 1.020); 
+        pq3.pop();
+        assert(pq3.top().dec_data == 1.001);
+        pq3.pop();
+        pq3.pop();
+        assert(pq3.empty());
+
+
+        // Odds before evens
+        PairingPQ<HiddenData, OddFirstComp> pq4;
+        pq4.push(HiddenData(4));
+        pq4.push(HiddenData(1));
+        pq4.push(HiddenData(3));
+        pq4.push(HiddenData(2));
+
+        // cout << "Expected top is: 1" << endl;
+        // cout << "Actual top is: " << pq4.top().data << endl;
+        // pq4.pop();
+        // cout << "When I pop that top, I get a new top of: " << pq4.top().data << endl;
+
+        assert(pq4.top().data == 1 || pq4.top().data == 3); 
+        if (pq4.top().data == 1)
+        {
+            pq4.pop();
+            assert(pq4.top().data == 3);
+        }
+        else
+        {
+            pq4.pop();
+            assert(pq4.top().data == 1);
+        }
+        pq4.pop();
+        pq4.pop();
+        pq4.pop();
+        assert(pq4.empty());
+
+
+
+        // Order by the last digit
+        PairingPQ<HiddenData, decltype(customComp)> pqL(customComp);
+        pqL.push(HiddenData(12));
+        pqL.push(HiddenData(25));
+        pqL.push(HiddenData(13));
+        pqL.push(HiddenData(7));
+
+        assert(pqL.top().data == 7);
+        pqL.pop();
+        assert(pqL.top().data == 25);
+        pqL.pop();
+        assert(pqL.top().data == 13);
+        pqL.pop();
+        assert(pqL.top().data == 12);
+        pqL.pop();
+        assert(pqL.empty());
+    }
+    
+
+    
    
     cout << "testHiddenData() succeeded!" << endl;
    
 } // testHiddenData()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // TODO: Add more code to this function to test if updatePriorities()
@@ -705,6 +832,13 @@ void testPairing(vector<int> & vec)
 } // testPairing()
 
 
+
+
+
+
+
+
+
 int main()
 {
     // Basic pointer, allocate a new PQ later based on user choice.
@@ -762,10 +896,10 @@ int main()
     } // else
     
     // Send the pq.
-    // testPriorityQueue(pq, types[choice]);
+    testPriorityQueue(pq, types[choice]);
     
-    // // Start with a fresh pq once inside here.
-    // testUpdatePriorities(types[choice]);
+    // Start with a fresh pq once inside here.
+    testUpdatePriorities(types[choice]);
 
     // Test comparator robustness.
     testHiddenData(types[choice]);
@@ -788,3 +922,17 @@ int main()
     
     return 0;
 } // main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+

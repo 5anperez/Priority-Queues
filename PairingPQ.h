@@ -4,6 +4,9 @@
 #include "Eecs281PQ.h"
 #include <deque>
 #include <utility>
+#include <iostream>
+
+using namespace std;
 
 // A specialized version of the 'priority queue' ADT implemented as a pairing heap.
 template<typename TYPE, typename COMP_FUNCTOR = std::less<TYPE>>
@@ -27,7 +30,7 @@ public:
         // Description: Allows access to the element at that Node's position.
         // There are two versions, getElt() and a dereference operator, use
         // whichever one seems more natural to you.
-        // Runtime: O(1) - this has been provided for you.
+        // Runtime: O(1).
         const TYPE &getElt() const { return elt; }
         const TYPE &operator*() const { return elt; }
         
@@ -81,17 +84,7 @@ public:
         while (!dq.empty())
         {
             // get the next element
-            Node *ptr = dq.front();
-            
-            // pop it because it will be deleted
-            dq.pop_front();
-            
-            // check for child and sibling
-            if (ptr->child)
-                dq.push_back(ptr->child);
-            
-            if (ptr->sibling)
-                dq.push_back(ptr->sibling);
+            Node *ptr = traversalHelper(dq);
             
             // I now have the current node's child and sibling in the deck
             // waiting to get pushed. I push the current node first.
@@ -117,10 +110,32 @@ public:
         return *this;
         
     } // operator=()
-    
-    
+
+
+
+
+    // Refactored: A helper function that abstracts node processing.
+    Node *traversalHelper(std::deque<Node*> &dq)
+    {
+        // Get the starting point and pop it.
+        Node *ptr = dq.front();
+        dq.pop_front();
+            
+        // Add the child and sibling if their not null.
+        if (ptr->sibling)
+            dq.push_back(ptr->sibling);
+        if (ptr->child)
+            dq.push_back(ptr->child);
+
+        return ptr;
+    } // traversalHelper()
+
+
+
+
     // Description: Destructor
     // Runtime: O(n)
+    // OG Refactored: Abstracted any code duplication
     ~PairingPQ()
     {
         // make a deque and insert root
@@ -134,17 +149,7 @@ public:
         while (!dq.empty())
         {
             // get the next element
-            Node *ptr = dq.front();
-            
-            // pop it because it will be deleted
-            dq.pop_front();
-            
-            // check for child and sibling
-            if (ptr->child)
-                dq.push_back(ptr->child);
-                
-            if (ptr->sibling)
-                dq.push_back(ptr->sibling);
+            Node *ptr = traversalHelper(dq);
             
             // delete the current node
             delete ptr;
@@ -153,12 +158,16 @@ public:
         numNodes = 0;
         
     } // ~PairingPQ()
-    
+
+
+
+
     
     // Description: Assumes that all elements inside the pairing heap are out of order and
     //              'rebuilds' the pairing heap by fixing the pairing heap invariant.
     //              You CANNOT delete 'old' nodes and create new ones!
     // Runtime: O(n)
+    // OG Refactored: abstracted any code duplication
     virtual void updatePriorities()
     {
         // create an aux deck
@@ -170,16 +179,7 @@ public:
         while (!dq.empty())
         {
             // get a starting point
-            Node *ptr = dq.front();
-            
-            // pop the start point
-            dq.pop_front();
-            
-            // add child and sibling if not null
-            if (ptr->sibling)
-                dq.push_back(ptr->sibling);
-            if (ptr->child)
-                dq.push_back(ptr->child);
+            Node *ptr = traversalHelper(dq);
             
             // severe the relationship
             ptr->parent = nullptr;
@@ -192,7 +192,8 @@ public:
         } // while()
         
     } // updatePriorities()
-    
+
+
     
     // Description: Add a new element to the pairing heap. This is already done.
     //              Push functionality is implemented entirely in the addNode()
@@ -208,7 +209,7 @@ public:
     //              the pairing heap.
     // Note: Do not run tests on your code that would require it to pop an
     // element when the pairing heap is empty. Unless you are familiar with 
-    // them, you do not need to use exceptions in this project.
+    // them, of course.
     // Runtime: Amortized O(log(n))
     virtual void pop()
     {
@@ -405,8 +406,8 @@ public:
     
 private:
     
-    // links two non null heaps: root a and root b (b is always the curr root)
-    // these roots must not have a parent or siblings
+    // Links two non null heaps: root a and root b (b is always the curr root)
+    // these roots must not have a parent or siblings.
     Node* meld(Node *a, Node *b)
     {
         // get extreme
@@ -440,48 +441,5 @@ private:
     size_t numNodes;
     
 };
-//            if (a->child)
-//            {
-//                // store the child
-//                Node *temp = a->child;
-//
-//                // give a a new child (put it to the left)
-//                a->child = b;
-//
-//                // give b a new sibling and parent
-//                b->sibling = temp;
-//                b->parent = a;
-//
-//                // make sure b's parent is still a
-//                b->sibling->parent = a;
-//            }
-//            else
-//            {
-//                // if a duplicate, or a is higher priority, then its the root
-//                a->child = b;
-//                b->parent = a;
-//            }
-//        // b > a
-//        // are there children?
-//        if (b->child)
-//        {
-//            // store the child
-//            Node *temp = b->child;
-//
-//            // give b a new child (put it to the left)
-//            b->child = a;
-//
-//            // give a a new sibling and parent
-//            a->sibling = temp;
-//            a->parent = b;
-//
-//            // make sure a's parent is still b
-//            a->sibling->parent = b;
-//        }
-//        else
-//        {
-//            b->child = a;
-//            a->parent = b;
-//        }
 
 #endif // PAIRINGPQ_H

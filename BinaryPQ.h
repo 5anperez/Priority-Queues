@@ -148,7 +148,6 @@ private:
             index /= 2;
             
         } // while
-    
     } // fixUp()
     
     // Description: fixes tree if a priority has decreased.
@@ -178,9 +177,7 @@ private:
             
             // and move down
             index = j;
-            
         } // while
-        
     } // fixDown()
     
     
@@ -188,14 +185,12 @@ private:
     TYPE &getElement(std::size_t i)
     {
         return data[i - 1];
-        
     } // getElement()
     
     // translates base-zero indexing to base-one
     const TYPE &getElement(std::size_t i) const
     {
         return data[i - 1];
-        
     } // getElement()
     
 }; // BinaryPQ
