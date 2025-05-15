@@ -14,6 +14,12 @@
  * testPriorityQueue() do not.  Make sure to test the range-based constructor
  * for other PQ types, and also test the PairingPQ-specific member functions.
  *
+ * 
+ * 
+ * NOTE THAT I AM RUNNING THIS PROGRAM BY SIMPLY USING THE PLAY BUTTON, WHICH COMPILES THE TESTS AND THEN I RUN THE FILE MANUALLY IN THE TERMINAL: ./testPQ
+ * 
+ * 
+ * 
  */
 
 #include <cassert>
@@ -407,6 +413,12 @@ void testUpdatePrioritiesHelper(Eecs281PQ<int *, IntPtrComp> *pq)
 } // testUpdatePrioritiesHelper()
 
 
+
+
+
+
+
+
 // TODO: Add more code to this function to test if updatePriorities()
 // is working properly.
 void testUpdatePriorities(const string &pqType)
@@ -445,6 +457,12 @@ void testUpdatePriorities(const string &pqType)
 
     delete pq;
 } // testUpdatePriorities()
+
+
+
+
+
+
 
 
 

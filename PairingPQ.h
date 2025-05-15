@@ -312,6 +312,7 @@ public:
     //               (as defined by comp) than the old priority.
     //
     // Runtime: As discussed in reading material.
+    // NEED TO TEST THIS!!
     void updateElt(Node* node, const TYPE &new_value)
     {
         // check for precondition

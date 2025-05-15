@@ -16,17 +16,20 @@
 template<typename TYPE, typename COMP_FUNCTOR = std::less<TYPE>>
 class UnorderedPQ : public Eecs281PQ<TYPE, COMP_FUNCTOR>
 {
+
     // This is a way to refer to the base class object.
     using BaseClass = Eecs281PQ<TYPE, COMP_FUNCTOR>;
 
 public:
     
-    // Default ctor
+    // Default ctor (COMP_FUNCTOR() provides a default argument by creating a default-constructed instance of the functor)
     // Description: Construct an empty heap with an optional comparison functor.
     // Runtime: O(1)
     explicit UnorderedPQ(COMP_FUNCTOR comp = COMP_FUNCTOR()) :
-        BaseClass{ comp }
+        BaseClass{ comp } // call the base class ctor
     {} // UnorderedPQ()
+
+
 
     // Range-based ctor
     // Description: Construct a heap out of an iterator range with an optional
@@ -37,6 +40,7 @@ public:
                 COMP_FUNCTOR comp = COMP_FUNCTOR()) : // WHAT IS THIS LINE DOING?
         BaseClass{ comp }, data{ start, end }
     {} // UnorderedPQ()
+
 
 
     // Description: Destructor doesn't need any code, the data vector will

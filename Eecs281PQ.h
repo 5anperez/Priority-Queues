@@ -20,6 +20,7 @@ class Eecs281PQ
 {
 public:
     
+    // DETRUCTOR
     virtual ~Eecs281PQ() {}
     
     // Description: Add a new element to the priority queue.
@@ -49,9 +50,14 @@ public:
     
 protected:
     
+    // DEFAULT CTOR
     Eecs281PQ() {}
-    explicit Eecs281PQ(const COMP_FUNCTOR &comp) : compare{ comp } {}
     
+    // CTOR THAT ACCEPTS A COMPARISON FUNCTION (functor)
+    explicit Eecs281PQ(const COMP_FUNCTOR &comp) : 
+    compare{ comp } {} // initializer list
+    
+    // MEMBER VARIABLES
     // Note: These data members *must* be used in all of your priority queue
     //       implementations.
     
