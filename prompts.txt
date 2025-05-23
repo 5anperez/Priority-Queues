@@ -43,11 +43,564 @@ I want to refactor some old C++ code I wrote, so that I can use it in another co
 
 
 
-P1: 
+P1.1: 
 
-I want to implement my own priority queue containers in cpp20. Generate a abstract base class that defines the interface (eg all the operations and behav that pqs support) of a generic pq called "SPsPQ" that deafualts as a max pq but can alsoaccept a comparison functor, which should be stored in a mem var, for custom compare and complex datatype; make it possible to derive other classes from it ie so that the members can be access from the base and from derived but not outside. only the destructor and the member functions should be available to access from outside. make sure implicit conversions are not possible when constructing an object of this base pq. the base class should have all the member functions and vars needed for a pq and should handle any datatype. in the future we will implement other pqs that will use their own data structures. 
+I want to implement my own priority queue containers in cpp20. Generate a abstract base class that defines a minimal interface (eg the baseline operations and behavr that very simple pqs support) of a generic pq called "SPsPQ" that deafualts as a max pq and works in general; make it possible to derive other classes from it ie so that the member variables can be access from the base and from derived but not outside. only the destructor and the member functions should be available to access from outside. do not use any libs or functions that trivialize the implement like priority_queue<>, make_heap(), etc. and make sure implicit conversions are not possible when constructing an object of this base pq. the base class should handle any datatype and in the future we will implement other pqs that will use their own data structures. the goal is to eventually create a stocks trading simulator that will invoke the containers we implement, which will be derived from our SPsPQ class.  
 
 
+
+CRIT:
+
+Did not declare a function to update priorities and incorreclty stated that the deleted move constructor and assignment operator can be implemented in derived classes if needed. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P1.2:
+
+I am getting an error regarding the template line. also once you define a function as deleted are you sure we can define them in derived classes? also modify the base class to declare update priorities . theres no need to regenerate the derived example only the base clas
+
+
+
+
+
+CRIT:
+
+not bad
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P1.3:
+
+for the update priorities function, it is meant to be a function thats called when the pq is out of order and needs to restore the pq invariant so mod that. then generate a derived class within its own head file that declares and defines an unordered pq. we will use it for testing purpose. give it a range based ctor 
+
+
+
+
+
+
+
+CRIT:
+
+In your heapifyDown function u keep parent child indices which is a binary heap structure and your updatePriority, which should really be updatePriorities, you maintain a sorted heap property. these two aspects, and the is sorted flag you integrated, are issues that do not make an unordered pq. i dont want to use smart pointers; further, this might not be the best time to use a raw array and i see potential mem leaks so instead make data a vector. also take care to respect and adhere to const-correctness becuz u call a non const method within a const method. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P1.4: 
+
+dont mix ordered and unordered concepts so omit the flag and the updatePriorities logic bcuz there is no pq invariant for unsorted pq omit sort too
+
+
+
+
+
+
+
+
+CRIT:
+
+Doesnt realize that an unordered pq should simply return the element with the highest priority, on the fly, and not worry about sorting. This wouldve been done with a simple linear search upon recieveing a request of the top element. This is the only functionality needed for testing other implementations. Also, I was not expecting an omission of the entire updatePriorities function, rather just its logic since it has to be implemented, even though empty, per the base class's pure virtual function, which is valid. A true unordered priority queue would keep elements in insertion order, do a linear search for the highest priority element (e.g., max/min), and not sort at all. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P2.1:
+
+I am building a stock market simulator that accepts historical data and with a streaming algo, can determne optimal time to purch and sale commodity at the highest price but i am also building the underlying datastructures. that said i will create several to experiment with and i have started wit a simple pq so generate an derived unordered pq class that i can use to test with. it goes in its own headr file do not use any libs or functions that trivialize the implement like priority_queue<>, make_heap(), etc give it a range based ctor 
+
+
+
+#ifndef SPSPQ_H
+#define SPSPQ_H
+
+#include <functional>  
+
+
+template<typename T, typename Compare = std::less<T>>
+class SPsPQ 
+{
+public: // INTERFACE
+    
+    // DTOR
+    virtual ~SPsPQ() = default;
+
+    // OPERATIONS
+    virtual void push(const T& value) = 0;         
+    virtual void pop() = 0;                        
+    virtual const T& getTop() const = 0;                              
+    virtual std::size_t getSize() const = 0;          
+    virtual bool isEmpty() const = 0;
+    virtual void updatePQ() = 0;             
+
+protected: // MEMBERS
+    
+    // CTOR
+    explicit SPsPQ(const Compare& comp = Compare())
+        : compareFunctor{ comp } {}
+
+
+    Compare compareFunctor;
+}; // class SPsPQ
+
+#endif // SPSPQ_H
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CRIT:
+
+Not bad, but used a raw dynamic array.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P2.2:
+
+explain the tradeoffs between using a raw dynamic array instead of a vector here. did u make the right choice container?
+
+
+
+
+
+
+
+
+
+
+
+
+P2.3:
+
+yes it does, but im using it for testing, and it wont drive the simulator. later more sophisticated pqs will. also, the "trivializing" part is regarding the pq implement operations not the container low level operations. lets make the next version wit this in mind ie use the vec. generate some test case that will exercise the unordered pqs edge cases and then generate another version of the unordered pq with an optimization such that its faster than the first, raw array version yet still a true unordered pq. 
+
+
+
+
+
+
+
+
+
+
+
+
+CRIT:
+
+the raw array version cannot handle custom types and requires an explicit defualt ctor, which is not robust implementation. 
+
+
+
+The model misunderstood my intent and tested the two vector versions, yet I was expecting to test the vector versions against the raw array. However, since it tested the two vector versions, it still could not find the bug, which was embedded within push. Push has several bugs, and the one the model raised was valid but its test case could not detect it. It took a sequence of pushing 10, 20, then pop, then push(5), and an assertion(getTop == 10), to reveal it. Another push bug is that it doesnt handle the case when the new value is equal to the current top. In this case, like shown in the screenshot, after pushing two duplicate ints, followed by a pop operation, the incorrect result it accessed, i.e., a stale location. Further, its raw array pointer also has issues since it doesnt handle when a default ctor is defined regarding custom data types.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P3:
+
+I have implemented the following base class and derived class and i have tested all basic functionality but to move on, i must make sure this derived class always gives correct results bc i will use it as my ground truth in testing other more complex derived clases. no matter the datatype and comparator, it must return the correct results. Do you see any logic errors, and if so, supply the corresponding testcase. the derived class is supposed to be an optimized version of an unordered pq but it looks rather complex so im not sure if i implemented it right. I do not want to use any facilities that will trivialize creating the pq implemntations. if i push 10 then 20 then pop then push 5 i expect to get a result of 10 when caln top since its a maxheap but it does not. why is that?
+
+// SPsPQ.h
+//
+// Base class for all special-purpose priority queues.
+//
+//
+
+
+#ifndef SPSPQ_H
+#define SPSPQ_H
+
+#include <functional>  
+
+
+template<typename T, typename Compare = std::less<T>>
+class SPsPQ 
+{
+public: // INTERFACE
+    
+    // DTOR
+    virtual ~SPsPQ() = default;
+
+    // OPERATIONS
+    virtual void push(const T& value) = 0;         
+    virtual void pop() = 0;                        
+    virtual const T& getTop() const = 0;                              
+    virtual std::size_t getSize() const = 0;          
+    virtual bool isEmpty() const = 0;
+    virtual void updatePQ() = 0;             
+
+protected: // MEMBERS
+    
+    // CTOR
+    explicit SPsPQ(const Compare& comp = Compare())
+        : compareFunctor{ comp } {}
+
+
+    Compare compareFunctor;
+}; // class SPsPQ
+
+#endif // SPSPQ_H
+
+
+
+
+
+
+
+
+
+// UnorderedOPT.h 
+
+#ifndef UNORDERED_PQ_OPTIMIZED_H
+#define UNORDERED_PQ_OPTIMIZED_H
+
+#include "SPsPQ.h"  // Base class header
+#include <vector>
+
+template<typename T, typename Compare = std::less<T>>
+class UnorderedPQOptimized : public SPsPQ<T, Compare> 
+{
+
+public:
+
+
+    // Default constructor
+    explicit UnorderedPQOptimized(const Compare& comp = Compare())
+        : SPsPQ<T, Compare>(comp), topIdx(0), topValid(false) {}
+
+
+
+    // Range-based constructor
+    template<typename Iterator>
+    UnorderedPQOptimized(Iterator begin, Iterator end, const Compare& comp = Compare())
+        : SPsPQ<T, Compare>(comp), data(begin, end), topIdx(0), topValid(false) {
+        if (!data.empty()) updateTop();
+    }
+
+
+
+    // Push a new value into the queue
+    void push(const T& value) override {
+        data.push_back(value);
+        if (!topValid || this->compareFunctor(data[topIdx], value)) {
+            topIdx = data.size() - 1;  // New element might be top
+            topValid = true;
+        }
+    }
+
+
+
+    // Remove the top element
+    void pop() override {
+        if (isEmpty()) return;
+
+        if (!topValid) updateTop();
+        
+        data[topIdx] = data.back();
+        data.pop_back();
+        topValid = false;  // Force recheck next time
+    }
+
+
+
+    // Get the top element (highest priority)
+    const T& getTop() const override {
+        if (isEmpty()) {
+            throw std::runtime_error("Priority queue is empty");
+        }
+        if (!topValid) {
+            const_cast<UnorderedPQOptimized*>(this)->updateTop();  // Lazy update
+        }
+        return data[topIdx];
+    }
+
+
+
+    // Get the current size
+    std::size_t getSize() const override {
+        return data.size();
+    }
+
+    // Check if the queue is empty
+    bool isEmpty() const override {
+        return data.empty();
+    }
+
+    // Update function (no-op unless forced)
+    void updatePQ() override {
+        updateTop();  // Explicitly update if needed
+    }
+
+
+private:
+
+    std::vector<T> data;      // Vector to store elements
+    std::size_t topIdx;       // Index of current top element
+    bool topValid;            // Flag to indicate if topIdx is valid
+
+
+
+    // Helper to find and update the top index
+    void updateTop() 
+    {
+        if (data.empty()) 
+        {
+            topValid = false;
+            return;
+        }
+
+        topIdx = 0;
+        for (std::size_t i = 1; i < data.size(); ++i) 
+        {
+            if (this->compareFunctor(data[topIdx], data[i])) {
+                topIdx = i;
+            }
+        }
+        topValid = true;
+    }
+};
+
+#endif // UNORDERED_PQ_OPTIMIZED_H
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P3.4:
+
+generate a derived class called BinPQ that implements a binary heap pq and give it a rangebased ctor. also give it two functions that will fix the tree when priorities increase "void bottomUp(size_t index)" and decrease "void topDown(size_t index)". updatepq should rebuild the heap and assume the invariant is broke. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P4.1:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PX:
+
+SORTED PQ SHOULD NOT HAVE ANY LOOPS ANYWHERE!!! THE STL CAN HANDLE EVERYTHING!!!
 
 
 

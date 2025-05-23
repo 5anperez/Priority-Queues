@@ -45,7 +45,7 @@ public:
         Node *sibling;
         Node *parent;
         
-    }; // Node
+    }; // class Node
     
     
     // Description: Construct an empty pairing heap with an optional comparison functor.

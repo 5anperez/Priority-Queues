@@ -2,6 +2,18 @@
 
     The base class from which all subsequent priority queue classes are derived from. E.g., SortedPQ is a templated class which inherits from this base templated class. This creates a dependent context, therefore, we must always specify this->compare, not just compare.
 
+
+    Think of the ADT as the interface, which is from the user's perspective, and the data structure as the implementation of that interface, which is from the programmer's perspective.
+
+
+    The unsorted priority queue is an ADT and the vector is the data structure, i.e., an implementation of it.
+    
+    The sorted priority queue is an ADT and the sorted vector is the data structure, i.e., an implementation of it.
+    
+    The priority queue is an ADT and the binary heap is the data structure, i.e., an implementation of it.
+
+    The priority queue is an ADT and the pairing heap is the data structure, i.e., an implementation of it.
+
 */
 
 

@@ -20,15 +20,18 @@ public:
     
     // Description: Construct an empty heap with an optional comparison functor.
     // Runtime: O(1)
-    explicit SortedPQ(COMP_FUNCTOR comp = COMP_FUNCTOR()) : BaseClass{ comp }
-    {} // SortedPQ
+    explicit SortedPQ(COMP_FUNCTOR comp = COMP_FUNCTOR()) : 
+    BaseClass{ comp }
+        {} // SortedPQ
 
 
     // Description: Construct a heap out of an iterator range with an optional
     //              comparison functor.
     // Runtime: O(n log n) where n is number of elements in range.
     template<typename InputIterator>
-    SortedPQ(InputIterator start, InputIterator end, COMP_FUNCTOR comp = COMP_FUNCTOR()) : BaseClass{ comp }, data{ start, end }
+    SortedPQ(InputIterator start, InputIterator end, 
+            COMP_FUNCTOR comp = COMP_FUNCTOR()) : 
+            BaseClass{ comp }, data{ start, end }
     { updatePriorities(); } // SortedPQ
 
 

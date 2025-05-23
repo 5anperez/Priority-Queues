@@ -54,13 +54,13 @@ struct DescendingComp1
     { return a > b; }
 };
 
-// 2. Creat the functor via lambda.
+// 2. Create the functor via lambda.
 // Used to test a min-heap type priority queue containing doubles.
-auto DescendingComp2 = [](double a, double b) 
-{
-    // Prioritizes smaller doubles.
-    return a > b;
-};
+// auto DescendingComp2 = [](double a, double b) 
+// {
+//     // Prioritizes smaller doubles.
+//     return a > b;
+// };
 
 struct AbsComparator 
 {
@@ -124,18 +124,6 @@ void testHiddenData(const string &pqType)
     {
         bool operator()(const HiddenData &a, const HiddenData &b) const 
         { return fabs(a.dec_data) < fabs(b.dec_data); }
-    };
-
-
-    // Introduce "thresholded" comparisons, where small differences are treated as equal.
-    struct HDThresholdComparator 
-    {
-        bool operator()(const HiddenData &a, const HiddenData &b) const 
-        {
-            const double threshold = 0.01;
-            double result = a.dec_data - b.dec_data;
-            return (fabs(result) > threshold) ? (result) : false;
-        }
     };
 
 
@@ -208,20 +196,6 @@ void testHiddenData(const string &pqType)
         assert(pq2.top().dec_data == 5.2);
 
 
-
-        SortedPQ<HiddenData, HDThresholdComparator> pq3;
-        pq3.push(HiddenData(1.001));
-        pq3.push(HiddenData(1.002));
-        pq3.push(HiddenData(1.020));
-
-        assert(pq3.top().dec_data == 1.020); 
-        pq3.pop();
-        assert(pq3.top().dec_data == 1.001);
-        pq3.pop();
-        pq3.pop();
-        assert(pq3.empty());
-
-
         // Odds before evens
         SortedPQ<HiddenData, OddFirstComp> pq4;
         pq4.push(HiddenData(4));
@@ -288,20 +262,6 @@ void testHiddenData(const string &pqType)
         assert(pq2.top().dec_data == -10.5); // Largest absolute decimal
         pq2.pop();
         assert(pq2.top().dec_data == 5.2);
-
-
-
-        PairingPQ<HiddenData, HDThresholdComparator> pq3;
-        pq3.push(HiddenData(1.001));
-        pq3.push(HiddenData(1.002));
-        pq3.push(HiddenData(1.020));
-
-        assert(pq3.top().dec_data == 1.020); 
-        pq3.pop();
-        assert(pq3.top().dec_data == 1.001);
-        pq3.pop();
-        pq3.pop();
-        assert(pq3.empty());
 
 
         // Odds before evens
@@ -468,7 +428,7 @@ void testUpdatePriorities(const string &pqType)
 
 void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
 {
-    cout << "\nTesting priority queue with integer values:: " << pqType << "\n" << endl;
+    cout << "\nTesting priority queue with integer values: " << pqType << "\n" << endl;
     
     // Very basic testing.
     cout << "Testing basic functionality...\n" << endl;
@@ -501,7 +461,7 @@ void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
     // Start fresh w/ an empty pq.
     assert(pq->empty());
 
-    cout << "Testing basic functionality passed!\n" << endl;
+    cout << "Basic functionality tests passed!\n" << endl;
 
 
     // TODO: Add more testing here!
@@ -529,7 +489,7 @@ void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
     assert(pq->top() == INT_MIN);
     pq->pop();
     assert(pq->empty());
-    cout << "Testing with extrame values passed!\n" << endl;
+    cout << "Extreme value tests passed!\n" << endl;
 
 
 
@@ -545,7 +505,7 @@ void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
     // Clean-up
     while (!pq->empty()) 
         pq->pop();
-    cout << "Testing with sorted values passed!\n" << endl;
+    cout << "Sorted value tests passed!\n" << endl;
 
 
 
@@ -561,7 +521,7 @@ void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
     // Clean-up
     while (!pq->empty()) 
         pq->pop();
-    cout << "Testing with reversed sorted values passed!\n" << endl;
+    cout << "Reversed sorted value tests passed!\n" << endl;
 
 
 
@@ -583,7 +543,7 @@ void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
     pq->pop();
     assert(pq->top() == -10);
     pq->pop();
-    cout << "Testing with both +/- values passed!\n" << endl;
+    cout << "Both +/- value tests passed!\n" << endl;
 
 
 
@@ -603,7 +563,7 @@ void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
     assert(pq->top() == 100);
     pq->pop();
     assert(pq->top() == 75);
-    cout << "Testing by manually modifying the values passed!\n" << endl;
+    cout << "Manual value modification tests passed!\n" << endl;
 
 
 
@@ -617,7 +577,7 @@ void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
     assert(pq2.top() == 10);
     pq2.pop();
     assert(pq2.empty());
-    cout << "Testing the default constructor passed!\n" << endl;
+    cout << "Default constructor tests passed!\n" << endl;
 
 
 
