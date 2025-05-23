@@ -355,9 +355,6 @@ void testHiddenData(const string &pqType)
 
 
 
-
-
-
 // TODO: Add more code to this function to test if updatePriorities()
 // is working properly.
 void testUpdatePQHelper(SPsPQ<int *, IntPtrComp> *pq)
@@ -394,12 +391,7 @@ void testUpdatePQHelper(SPsPQ<int *, IntPtrComp> *pq)
     pq->updatePQ();
     assert(*pq->getTop() == 3000);
     
-} // testUpdatePrioritiesHelper()
-
-
-
-
-
+} // testUpdatePQHelper()
 
 
 
@@ -432,17 +424,12 @@ void testUpdatePQ(const string &pqType)
         return;
     } // if
     
-    // if (pqType != "Unordered")
-    //     testUpdatePQHelper(pq);
-
     testUpdatePQHelper(pq);
 
     cout << "\n\n********** END: Testing " << pqType << " priority queue updatePQ() succeeded! **********\n" << endl;
 
     delete pq;
 } // testUpdatePQ()
-
-
 
 
 
@@ -591,10 +578,6 @@ void testPriorityQueuePtr(SPsPQ<int> *pq, const string &pqType)
 
 
 
-
-
-
-
 // Test the unsorted heap's range-based constructor, copy constructor,
 // and operator=().
 //
@@ -617,10 +600,6 @@ void testPQsCtor(SPsPQ<int> *pq, const string &pqType)
     // assert(emptyPQ->getTop() == 0);
     // delete emptyPQ;
 
-    // Mix of positive and negative numbers
-    cout << "Testing with both +/- values...\n"
-         << endl;
-
     assert(pq->getSize() == 6);
     assert(pq->getTop() == 87);
 
@@ -637,7 +616,6 @@ void testPQsCtor(SPsPQ<int> *pq, const string &pqType)
 
     cout << "\n\n********** END: Testing " << pqType << "'s range-based constructor succeeded! **********\n" << endl;
 } // testPQsCtor()
-
 
 
 
@@ -866,11 +844,6 @@ void testPriorityQueue(const string &pqType)
 
     cout << "\n\n********** END: Testing " << pqType << " basic functionality (regular version) succeeded! **********\n" << endl;
 } // testPriorityQueue()
-
-
-
-
-
 
 
 
@@ -1135,9 +1108,7 @@ void runEdgeTests(const string &pqType)
 
     cout << "\n\n********** END: Testing " << pqType << " edge tests to reveal version-specific bugs (regular version) succeeded! **********\n" << endl;
 
-}
-
-
+} // runEdgeTests()
 
 
 
@@ -1212,10 +1183,7 @@ void specialTests(const string &pqType)
     }
 
     cout << "\n\n********** END: Testing " << pqType << "'s equal elements corner case succeeded! **********\n" << endl;
-}
-
-
-
+} // specialTests()
 
 
 
@@ -1266,15 +1234,7 @@ void specialTests2(const string &pqType)
     }
 
     cout << "\n\n********** END: Testing " << pqType << " special tests to reveal version-specific bugs succeeded! **********\n" << endl;
-}
-
-
-
-
-
-
-
-
+} // specialTests2()
 
 
 
@@ -1310,8 +1270,7 @@ int binTests()
     pq3.push(25); // Adds at index 3, but for simulation, assume we modify index 2
     // In a real scenario, you'd modify data directly if priorities change, but for test, push and adjust
     std::cout << "Test 3 - Top before bottomUp: " << pq3.getTop() << std::endl; // Should be 25 or 20
-    assert(pq3.getTop() == 25 || pq3.getTop() == 20);
-    pq3.bottomUp(2); // Should have no effect unless data[2] changed; for demo, assume it’s updated
+    assert(pq3.getTop() == 25);
     // Note: For a real test, modify data[2] directly if priority changes
 
 
@@ -1344,20 +1303,264 @@ int binTests()
     cout << "\n\n********** END: Testing BinaryPQ **********\n" << endl;
 
     return 0;
-}
+} // binTests()
 
 
 
+void additionalBinPQEdgeTests() 
+{
+    cout << "\n\n********** START: Additional BinPQ Edge Tests **********\n" << endl;
+
+    // Test 1: Heap property verification after multiple operations
+    {
+        cout << "Test 1: Verify heap property maintained after complex operations, and updatePQ heap property maintenance\n";
+        BinPQ<int> pq;
+        vector<int> values = {15, 10, 20, 8, 2, 12, 25};
+        
+        for (int val : values) {
+            pq.push(val);
+        }
+        
+        // Extract all elements and verify they come out in sorted order
+        vector<int> extracted;
+        while (!pq.isEmpty()) {
+            extracted.push_back(pq.getTop());
+            pq.pop();
+        }
+        
+        // Should be in descending order
+        assert(std::is_sorted(extracted.rbegin(), extracted.rend()));
+
+
+        // Test updatePQ maintains heap property
+        std::vector<int> data = {1, 5, 3, 9, 2, 8, 4, 7, 6};
+        BinPQ<int> pq2(data.begin(), data.end());
+        
+        pq2.updatePQ(); // Force rebuild
+        
+        // Verify heap property maintained
+        std::vector<int> result;
+        while (!pq.isEmpty()) {
+            result.push_back(pq2.getTop());
+            pq2.pop();
+        }
+        
+        for (size_t i = 1; i < result.size(); ++i) {
+            assert(result[i-1] >= result[i]);
+        }
+        cout << "Test 1 passed!\n" << endl;
+    }
 
 
 
+    // Test 2: Stress test with ascending sequence
+    {
+        cout << "Test 2: Ascending sequence stress test\n";
+        BinPQ<int> pq;
+        const int N = 1000;
+        
+        for (int i = 0; i < N; ++i) {
+            pq.push(i);
+        }
+        
+        assert(pq.getTop() == N - 1);
+        
+        // Pop half the elements
+        for (int i = 0; i < N/2; ++i) {
+            pq.pop();
+        }
+        
+        assert(pq.getTop() == N/2 - 1);
+        cout << "Test 2 passed!\n" << endl;
+    }
 
 
 
+    // Test 3: Descending sequence stress test
+    {
+        cout << "Test 3: Descending sequence stress test\n";
+        BinPQ<int> pq;
+        const int N = 1000;
+        
+        for (int i = N; i > 0; --i) {
+            pq.push(i);
+        }
+        
+        assert(pq.getTop() == N);
+        cout << "Test 3 passed!\n" << endl;
+    }
 
 
 
+    // Test 4: updatePQ edge cases
+    {
+        cout << "Test 4: updatePQ with various heap states\n";
+        
+        // Empty heap
+        BinPQ<int> pq1;
+        pq1.updatePQ(); // Should not crash
+        
+        // Single element
+        BinPQ<int> pq2;
+        pq2.push(42);
+        pq2.updatePQ();
+        assert(pq2.getTop() == 42);
+        
+        // Already valid heap
+        vector<int> valid_heap = {100, 50, 75, 25, 40, 60, 70};
+        BinPQ<int> pq3(valid_heap.begin(), valid_heap.end());
+        pq3.updatePQ();
+        assert(pq3.getTop() == 100);
+        
+        cout << "Test 4 passed!\n" << endl;
+    }
 
+
+
+    // Test 5: Alternating push/pop pattern
+    {
+        cout << "Test 5: Alternating push/pop pattern\n";
+        BinPQ<int> pq;
+        
+        for (int i = 0; i < 10; ++i) {
+            pq.push(i * 10);
+            pq.push(i * 10 + 5);
+            assert(!pq.isEmpty());
+            pq.pop();
+        }
+        
+        // Should have 10 elements left
+        assert(pq.getSize() == 10);
+        
+        // Verify heap property
+        vector<int> remaining;
+        while (!pq.isEmpty()) {
+            remaining.push_back(pq.getTop());
+            pq.pop();
+        }
+        assert(std::is_sorted(remaining.rbegin(), remaining.rend()));
+        
+        cout << "Test 5 passed!\n" << endl;
+    }
+
+
+
+    // Test 6: Copy and move semantics
+    {
+        cout << "Test 6: Copy and move semantics\n";
+        
+        // Test copy constructor
+        BinPQ<int> original;
+        original.push(10);
+        original.push(20);
+        original.push(5);
+        
+        BinPQ<int> copy(original);
+        assert(copy.getTop() == original.getTop());
+        assert(copy.getSize() == original.getSize());
+        
+        // Modify copy shouldn't affect original
+        copy.pop();
+        assert(copy.getSize() == original.getSize() - 1);
+        
+        // Test move constructor
+        BinPQ<int> moved(std::move(copy));
+        assert(moved.getSize() == 2);
+        
+        // Test assignment operators
+        BinPQ<int> assigned;
+        assigned = original;
+        assert(assigned.getTop() == original.getTop());
+        
+        cout << "Test 6 passed!\n" << endl;
+    }
+
+    // Test 7: Large random dataset
+    {
+        cout << "Test 7: Large random dataset\n";
+        BinPQ<int> pq;
+        const int N = 10000;
+        vector<int> values;
+        
+        // Generate random values
+        for (int i = 0; i < N; ++i) {
+            int val = rand() % 1000;
+            values.push_back(val);
+            pq.push(val);
+        }
+        
+        // Sort for verification
+        sort(values.rbegin(), values.rend());
+        
+        // Verify heap returns elements in correct order
+        for (int i = 0; i < N; ++i) {
+            assert(static_cast<long long>(pq.getTop()) == static_cast<long long>(values[static_cast<size_t>(i)]));
+            pq.pop();
+        }
+
+
+
+        // Test with maximum/minimum values
+        BinPQ<int> pq2;
+        pq2.push(INT_MAX);
+        pq2.push(INT_MIN);
+        pq2.push(0);
+        
+        assert(pq2.getTop() == INT_MAX);
+        pq2.pop();
+        assert(pq2.getTop() == 0);
+        pq2.pop();
+        assert(pq2.getTop() == INT_MIN);
+        
+        cout << "Test 7 passed!\n" << endl;
+    }
+
+    // Test 8: Min-heap functionality
+    {
+        cout << "Test 8: Min-heap with greater comparator\n";
+        BinPQ<int, std::greater<int>> minHeap;
+        
+        minHeap.push(10);
+        minHeap.push(5);
+        minHeap.push(15);
+        minHeap.push(3);
+        
+        assert(minHeap.getTop() == 3);
+        minHeap.pop();
+        assert(minHeap.getTop() == 5);
+        
+        cout << "Test 8 passed!\n" << endl;
+    }
+
+    // Test 9: Custom comparator with complex logic
+    {
+        cout << "Test 9: Complex comparator test\n";
+        
+        // Comparator that prioritizes even numbers over odd
+        auto evenFirst = [](int a, int b) {
+            if (a % 2 != b % 2) {
+                return (a % 2) > (b % 2); // odd > even in comparison
+            }
+            return a < b;
+        };
+        
+        BinPQ<int, decltype(evenFirst)> pq(evenFirst);
+        pq.push(1);
+        pq.push(2);
+        pq.push(3);
+        pq.push(4);
+        
+        assert(pq.getTop() == 4); // Largest even
+        pq.pop();
+        assert(pq.getTop() == 2); // Next even
+        pq.pop();
+        assert(pq.getTop() == 3); // Largest odd
+        
+        cout << "Test 9 passed!\n" << endl;
+    }
+
+    cout << "\n\n********** END: Additional BinPQ Edge Tests **********\n" << endl;
+} // additionalBinPQEdgeTests()
 
 
 
@@ -1372,7 +1575,6 @@ int main()
         "Sorted",
         "Binary",
         "Pairing",
-        "Unordered.2"
     }; // choice types
 
     
@@ -1408,6 +1610,7 @@ int main()
     else if (choice == 3)
     {
         binTests();
+        additionalBinPQEdgeTests();
         pq1 = new BinPQ<int>;
         pq2 = new BinPQ<int>(start, end);
     }
@@ -1418,22 +1621,20 @@ int main()
         exit(1);
     } // else
 
-    testHiddenData(types[choice]);
-
+    // Send the pq.
     testPriorityQueue(types[choice]);
+    testPriorityQueuePtr(pq1, types[choice]);
+    testPQsCtor(pq2, types[choice]);
 
+    testUpdatePQ(types[choice]);
+
+    testHiddenData(types[choice]);
+    
     runEdgeTests(types[choice]);
 
     specialTests(types[choice]);
 
     specialTests2(types[choice]);
-
-    // Send the pq.
-    testPriorityQueuePtr(pq1, types[choice]);
-
-    testPQsCtor(pq2, types[choice]);
-
-    testUpdatePQ(types[choice]);
 
     // Clean up!
     delete pq1;

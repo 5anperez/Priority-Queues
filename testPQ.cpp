@@ -33,6 +33,7 @@
 #include "Eecs281PQ.h"
 #include "BinaryPQ.h"
 #include "UnorderedPQ.h"
+#include "UnorderedFastPQ.h"
 #include "PairingPQ.h"
 #include "SortedPQ.h"
 
@@ -154,7 +155,7 @@ void testHiddenData(const string &pqType)
     { return (a.data % 10) < (b.data % 10); };
 
     
-    cout << "Testing " << pqType << " with hidden data" << endl;
+    cout << "\n\n********** START: Testing " << pqType << " with hidden data **********\n" << endl;
     
     // TODO: Add code here to actually test with the HiddenData type.
 
@@ -203,9 +204,10 @@ void testHiddenData(const string &pqType)
         pq4.push(HiddenData(3));
         pq4.push(HiddenData(2));
 
-        assert(pq4.top().data == 1); 
+        assert(pq4.top().data == 3); 
         pq4.pop();
-        assert(pq4.top().data == 3);
+        assert(pq4.top().data == 1);
+        pq4.pop();
         pq4.pop();
         pq4.pop();
         assert(pq4.empty());
@@ -231,7 +233,6 @@ void testHiddenData(const string &pqType)
     }
     else if (pqType == "Pairing")
     {
-        cout << "Testing " << pqType << " with custom functors...\n" << endl;
         // Create a simple sorted pq w/ the hidden type and comparator.
         PairingPQ<HiddenData, HiddenDataMaxHeap> pq;
 
@@ -311,30 +312,226 @@ void testHiddenData(const string &pqType)
         pqL.pop();
         assert(pqL.empty());
     }
-    
+    else if (pqType == "Unordered")
+    {
+        // Create a simple sorted pq w/ the hidden type and comparator.
+        UnorderedPQ<HiddenData, HiddenDataMaxHeap> pq;
 
-    
-   
-    cout << "testHiddenData() succeeded!" << endl;
+        // Populate the pq
+        pq.push(HiddenData(5));
+        pq.push(HiddenData(10));
+        pq.push(HiddenData(3));
+
+        // Verify size and top element.
+        assert(pq.size() == 3);
+        assert(pq.top().data == 10);
+
+        // Pop and check remaining elements
+        pq.pop();
+        assert(pq.top().data == 5);
+        pq.pop();
+        assert(pq.top().data == 3);
+        pq.pop();
+        assert(pq.empty());
+
+        UnorderedPQ<HiddenData, HDAbsComparator> pq2;
+        pq2.push(HiddenData(-10.5));
+        pq2.push(HiddenData(5.2));
+        pq2.push(HiddenData(-3.3));
+
+        assert(pq2.top().dec_data == -10.5); // Largest absolute decimal
+        pq2.pop();
+        assert(pq2.top().dec_data == 5.2);
+
+
+        // Odds before evens:
+        /**
+         * Input: [4, 1, 3, 2]
+         * Ordering:
+         * 1. Odd numbers first: [1, 3, 4, 2]
+         * 2. Within odd numbers, larger first: [3, 1, 4, 2]
+         * 3. Within even numbers, larger first: [3, 1, 4, 2]
+         * Final order: [3, 1, 4, 2]
+         */
+        UnorderedPQ<HiddenData, OddFirstComp> pq4;
+        pq4.push(HiddenData(4));
+        pq4.push(HiddenData(1));
+        pq4.push(HiddenData(3));
+        pq4.push(HiddenData(2));
+
+        assert(pq4.top().data == 3); 
+        pq4.pop();
+        assert(pq4.top().data == 1);
+        pq4.pop();
+        pq4.pop();
+        assert(pq4.top().data == 2);
+        pq4.pop();
+        assert(pq4.empty());
+
+
+
+        // Order by the last digit
+        UnorderedPQ<HiddenData, decltype(customComp)> pqL(customComp);
+        pqL.push(HiddenData(12));
+        pqL.push(HiddenData(25));
+        pqL.push(HiddenData(13));
+        pqL.push(HiddenData(7));
+
+        assert(pqL.top().data == 7);
+        pqL.pop();
+        assert(pqL.top().data == 25);
+        pqL.pop();
+        assert(pqL.top().data == 13);
+        pqL.pop();
+        assert(pqL.top().data == 12);
+        pqL.pop();
+        assert(pqL.empty());
+    }
+    else if (pqType == "UnorderedOPT")
+    {
+        // Create a simple sorted pq w/ the hidden type and comparator.
+        UnorderedFastPQ<HiddenData, HiddenDataMaxHeap> pq;
+
+        // Populate the pq
+        pq.push(HiddenData(5));
+        pq.push(HiddenData(10));
+        pq.push(HiddenData(3));
+
+        // Verify size and top element.
+        assert(pq.size() == 3);
+        assert(pq.top().data == 10);
+
+        // Pop and check remaining elements
+        pq.pop();
+        assert(pq.top().data == 5);
+        pq.pop();
+        assert(pq.top().data == 3);
+        pq.pop();
+        assert(pq.empty());
+
+        UnorderedFastPQ<HiddenData, HDAbsComparator> pq2;
+        pq2.push(HiddenData(-10.5));
+        pq2.push(HiddenData(5.2));
+        pq2.push(HiddenData(-3.3));
+
+        assert(pq2.top().dec_data == -10.5); // Largest absolute decimal
+        pq2.pop();
+        assert(pq2.top().dec_data == 5.2);
+
+
+        // Odds before evens
+        UnorderedFastPQ<HiddenData, OddFirstComp> pq4;
+        pq4.push(HiddenData(4));
+        pq4.push(HiddenData(1));
+        pq4.push(HiddenData(3));
+        pq4.push(HiddenData(2));
+
+        assert(pq4.top().data == 3); 
+        pq4.pop();
+        assert(pq4.top().data == 1);
+        pq4.pop();
+        pq4.pop();
+        assert(pq4.top().data == 2);
+        pq4.pop();
+        assert(pq4.empty());
+
+
+
+        // Order by the last digit
+        UnorderedFastPQ<HiddenData, decltype(customComp)> pqL(customComp);  
+        pqL.push(HiddenData(12));
+        pqL.push(HiddenData(25));
+        pqL.push(HiddenData(13));
+        pqL.push(HiddenData(7));
+
+        assert(pqL.top().data == 7);
+        pqL.pop();
+        assert(pqL.top().data == 25);
+        pqL.pop();
+        assert(pqL.top().data == 13);
+        pqL.pop();
+        assert(pqL.top().data == 12);
+        pqL.pop();
+        assert(pqL.empty());
+    }
+    else if (pqType == "Binary")
+    {
+        // Create a simple sorted pq w/ the hidden type and comparator.
+        BinaryPQ<HiddenData, HiddenDataMaxHeap> pq;
+
+        // Populate the pq
+        pq.push(HiddenData(5));
+        pq.push(HiddenData(10));
+        pq.push(HiddenData(3));
+
+        // Verify size and top element.
+        assert(pq.size() == 3);
+        assert(pq.top().data == 10);
+
+        // Pop and check remaining elements
+        pq.pop();
+        assert(pq.top().data == 5);
+        pq.pop();
+        assert(pq.top().data == 3);
+        pq.pop();
+        assert(pq.empty());
+
+        BinaryPQ<HiddenData, HDAbsComparator> pq2;
+        pq2.push(HiddenData(-10.5));
+        pq2.push(HiddenData(5.2));
+        pq2.push(HiddenData(-3.3));
+
+        assert(pq2.top().dec_data == -10.5); // Largest absolute decimal
+        pq2.pop();
+        assert(pq2.top().dec_data == 5.2);
+
+
+        // Odds before evens
+        BinaryPQ<HiddenData, OddFirstComp> pq4;
+        pq4.push(HiddenData(4));
+        pq4.push(HiddenData(1));
+        pq4.push(HiddenData(3));
+        pq4.push(HiddenData(2));
+
+        assert(pq4.top().data == 3); 
+        pq4.pop();
+        assert(pq4.top().data == 1);
+        pq4.pop();
+        pq4.pop();
+        assert(pq4.top().data == 2);
+        pq4.pop();
+        assert(pq4.empty());
+
+
+
+        // Order by the last digit
+        BinaryPQ<HiddenData, decltype(customComp)> pqL(customComp);
+        pqL.push(HiddenData(12));
+        pqL.push(HiddenData(25));
+        pqL.push(HiddenData(13));
+        pqL.push(HiddenData(7));
+
+        assert(pqL.top().data == 7);
+        pqL.pop();
+        assert(pqL.top().data == 25);
+        pqL.pop();
+        assert(pqL.top().data == 13);
+        pqL.pop();
+        assert(pqL.top().data == 12);
+        pqL.pop();
+        assert(pqL.empty());
+    }
+
+
+    cout << "\n\n********** END: Testing " << pqType << " with hidden data succeeded! **********\n" << endl;
    
 } // testHiddenData()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 // TODO: Add more code to this function to test if updatePriorities()
 // is working properly.
-void testUpdatePrioritiesHelper(Eecs281PQ<int *, IntPtrComp> *pq)
+void testUpdatePQHelper(Eecs281PQ<int *, IntPtrComp> *pq)
 {
     vector<int> data;
     data.reserve(100);
@@ -368,26 +565,18 @@ void testUpdatePrioritiesHelper(Eecs281PQ<int *, IntPtrComp> *pq)
     pq->updatePriorities();
     assert(*pq->top() == 3000);
     
-    cout << "updatePriorities() succeeded!" << endl;
-    
-} // testUpdatePrioritiesHelper()
-
-
-
-
-
+} // testUpdatePQHelper()
 
 
 
 // TODO: Add more code to this function to test if updatePriorities()
 // is working properly.
-void testUpdatePriorities(const string &pqType)
+void testUpdatePQ(const string &pqType)
 {
+    cout << "\n\n********** START: Testing " << pqType << " priority queue updatePQ() **********\n" << endl;
+
     Eecs281PQ<int *, IntPtrComp> *pq = nullptr;
 
-    if (pqType != "Unordered")
-        cout << "Testing updatePriorities() on " << pqType << endl;
-    
     if (pqType == "Unordered")
     {
         pq = new UnorderedPQ<int *, IntPtrComp>;
@@ -412,26 +601,23 @@ void testUpdatePriorities(const string &pqType)
         return;
     } // if
     
-    if (pqType != "Unordered")
-        testUpdatePrioritiesHelper(pq);
+    testUpdatePQHelper(pq);
+
+    cout << "\n\n********** END: Testing " << pqType << " priority queue updatePQ() succeeded! **********\n" << endl;
 
     delete pq;
-} // testUpdatePriorities()
+} // testUpdatePQ()
 
 
 
-
-
-
-
-
-
-void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
+// Test the basic functionality of the priority queue pointer version.
+void testPriorityQueuePtr(Eecs281PQ<int> *pq, const string &pqType)
 {
-    cout << "\nTesting priority queue with integer values: " << pqType << "\n" << endl;
+    cout << "\n\n********** START: Testing " << pqType << " basic functionality (pointer version) **********\n" << endl;
     
     // Very basic testing.
-    cout << "Testing basic functionality...\n" << endl;
+    cout << "Test 1: integer values...\n"
+         << endl;
     pq->push(3);
     pq->push(4);
     assert(pq->size() == 2);
@@ -461,7 +647,8 @@ void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
     // Start fresh w/ an empty pq.
     assert(pq->empty());
 
-    cout << "Basic functionality tests passed!\n" << endl;
+    cout << "Integer value tests passed!\n"
+         << endl;
 
 
     // TODO: Add more testing here!
@@ -565,8 +752,20 @@ void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
     assert(pq->top() == 75);
     cout << "Manual value modification tests passed!\n" << endl;
 
+    cout << "\n\n********** END: Testing " << pqType << " basic functionality (pointer version) succeeded! **********\n" << endl;
+
+} // testPriorityQueuePtr()
 
 
+
+void testSortedPQ(Eecs281PQ<int> *pq, const string &pqType)
+{
+    cout << "\n\n********** START: Testing " << pqType << " sorted functionality **********\n" << endl;
+
+
+    /// NOTE: WHAT SHOULD I DO WITH THE PTR??? MAYBE TRY SOME COPYING AND ASSIGNMENT TESTS???
+    
+    
     // Test the default constructor
     cout << "Testing the default constructor's basic functionality...\n" << endl;
     SortedPQ<int> pq2;
@@ -670,9 +869,6 @@ void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
     std::cout << "Random inputs w/ the range-based ctor & min-heapPQ test passed!" << std::endl;    
     
 
-    cout << "\n***************************" << endl;
-    cout << "ALL INTEGER TESTS PASSED!!!" << endl;
-    cout << "***************************\n" << endl;
 
 
 
@@ -714,20 +910,51 @@ void testPriorityQueue(Eecs281PQ<int> *pq, const string &pqType)
     pq4.updatePriorities();
     assert(pq4.empty());
     std::cout << "updatePriorities on empty queue test passed!\n" << std::endl;
-    
-    
-    cout << "testPriorityQueue() succeeded!" << endl;
-} // testPriorityQueue()
 
+    pq4.push(1);
+    pq4.push(2);
+    pq4.push(3);
+    pq4.updatePriorities();
+    assert(pq4.top() == 3);
+    pq4.pop();
+    assert(pq4.top() == 2);
+
+    /**
+     * In this case, since pq is a pointer to Eecs281PQ<int> 
+     * and pq4 is a SortedPQ<int>, you need to use the 
+     * address-of operator to get the address of pq4.
+     */
+    pq = &pq4;
+    pq->push(0);
+    pq->push(-1);   // pq = [-1, 0, 1, 2]
+    assert(pq->top() == 2);
+    
+    pq->pop();
+    pq->pop();
+    pq->pop();
+    assert(pq->top() == -1);
+    
+    
+    
+    
+
+    
+    cout << "\n\n********** END: Testing " << pqType << " sorted functionality succeeded! **********\n" << endl;
+    
+} // testSortedPQ()
 
 
 
 // Test the unsorted heap's range-based constructor, copy constructor,
 // and operator=().
 //
-void testUnsortedPQ(Eecs281PQ<int> *pq, const string &pqType)
+void testPQsCtor(Eecs281PQ<int> *pq, const string &pqType)
 {
-    cout << "Testing unsorted queue: " << pqType << endl;
+    // Send a subset = {6,...,87}, i.e., shrink the range
+    // by setting a ptr to the 6th elt and the the 11th
+    // elt to get the subset [6, 45).
+
+    cout << "\n\n********** START: Testing " << pqType << "'s range-based constructor **********\n" << endl;
     
     assert(pq->size() == 6);
     assert(pq->top() == 87);
@@ -743,9 +970,8 @@ void testUnsortedPQ(Eecs281PQ<int> *pq, const string &pqType)
     
     // TODO: Add more testing here!
     
-    cout << "testUnsortedPQ() succeeded!" << endl;
-} // testPriorityQueue()
-
+    cout << "\n\n********** END: Testing " << pqType << "'s range-based constructor succeeded! **********\n" << endl;
+} // testPQsCtor()
 
 
 
@@ -811,22 +1037,707 @@ void testPairing(vector<int> & vec)
 
 
 
+// Test the basic functionality of the priority queue regular version.
+void testPriorityQueue(const string &pqType) 
+{
+    cout << "\n\n********** START: Testing " << pqType << " basic functionality (regular version) **********\n" << endl;
+
+    if (pqType == "Unordered")
+    {
+        // Test 1: Empty queue
+        cout << "Test 1: empty queue..."
+         << endl;
+        UnorderedPQ<int> pq1;
+        assert(pq1.empty() && "Empty queue should report empty");
+        try {
+            pq1.top();
+            std::cout << "Test 1 failed: Expected exception on empty getTop\n";
+        } catch (const std::runtime_error&) {
+            std::cout << "Test 1 passed: Empty queue throws on getTop\n";
+        }
+
+        // Test 2: Single element
+        cout << "Test 2: single element..."
+         << endl;
+        pq1.push(42);
+        assert(pq1.size() == 1 && "Size should be 1");
+        assert(pq1.top() == 42 && "Top should be 42");
+        pq1.pop();
+        assert(pq1.empty() && "Queue should be empty after pop");
+        cout << "Test 2 passed!\n"
+         << endl;
+
+        // Test 3: Range-based constructor with duplicates
+        cout << "Test 3: range-based constructor with duplicates..."
+         << endl;
+        int arr[] = {3, 1, 4, 1, 5, 9, 2, 6, 5};
+        UnorderedPQ<int> pq2(arr, arr + 9);
+        assert(pq2.size() == 9 && "Size should match range");
+        assert(pq2.top() == 9 && "Top should be max (9)");
+        pq2.pop();
+        assert(pq2.top() == 6 && "Next top should be 6 after pop");
+        cout << "Test 3 passed!\n"
+         << endl;
+
+        // Test 4: All equal elements
+        cout << "Test 4: all equal elements..."
+         << endl;
+        UnorderedPQ<int> pq3;
+        for (int i = 0; i < 5; ++i) pq3.push(7);
+        assert(pq3.size() == 5 && "Size should be 5");
+        assert(pq3.top() == 7 && "Top should be 7");
+        pq3.pop();
+        assert(pq3.size() == 4 && "Size should decrease");
+        assert(pq3.top() == 7 && "Top should still be 7");
+        cout << "Test 4 passed!\n"
+         << endl;
+
+        // Test 5: Push after pop to zero
+        cout << "Test 5: push after pop to zero..."
+         << endl;
+        UnorderedPQ<int> pq4;
+        pq4.push(1);
+        pq4.pop();
+        assert(pq4.empty() && "Should be empty after pop");
+        pq4.push(2);
+        assert(pq4.top() == 2 && "New push should work");
+        cout << "Test 5 passed!\n"
+         << endl;
+
+        // Test 6: Large number of elements
+        cout << "Test 6: large number of elements..."
+         << endl;
+        UnorderedPQ<int> pq5;
+        for (int i = 0; i < 1000; ++i) pq5.push(i);
+        assert(pq5.size() == 1000 && "Size should be 1000");
+        assert(pq5.top() == 999 && "Top should be max (999)");
+        cout << "Test 6 passed!\n"
+         << endl;
+
+    }
+    else if (pqType == "UnorderedOPT")
+    {
+        // Test 1: Empty queue
+        cout << "Test 1: empty queue..."
+         << endl;
+        UnorderedFastPQ<int> pq1;
+        assert(pq1.empty() && "Empty queue should report empty");
+        try {
+            pq1.top();
+            std::cout << "Test 1 failed: Expected exception on empty getTop\n";
+        } catch (const std::runtime_error&) {
+            std::cout << "Test 1 passed: Empty queue throws on getTop\n";
+        }
+
+        // Test 2: Single element
+        cout << "Test 2: single element..."
+         << endl;
+        pq1.push(42);
+        assert(pq1.size() == 1 && "Size should be 1");
+        assert(pq1.top() == 42 && "Top should be 42");
+        pq1.pop();
+        assert(pq1.empty() && "Queue should be empty after pop");
+        cout << "Test 2 passed!\n"
+         << endl;
+
+        // Test 3: Range-based constructor with duplicates
+        cout << "Test 3: range-based constructor with duplicates..."
+         << endl;
+        int arr[] = {3, 1, 4, 1, 5, 9, 2, 6, 5};
+        UnorderedFastPQ<int> pq2(arr, arr + 9);
+        assert(pq2.size() == 9 && "Size should match range");
+        assert(pq2.top() == 9 && "Top should be max (9)");
+        pq2.pop();
+        assert(pq2.top() == 6 && "Next top should be 6 after pop");
+        cout << "Test 3 passed!\n"
+         << endl;
+
+        // Test 4: All equal elements
+        cout << "Test 4: all equal elements..."
+         << endl;
+        UnorderedFastPQ<int> pq3;
+        for (int i = 0; i < 5; ++i) pq3.push(7);
+        assert(pq3.size() == 5 && "Size should be 5");
+        assert(pq3.top() == 7 && "Top should be 7");
+        pq3.pop();
+        assert(pq3.size() == 4 && "Size should decrease");
+        assert(pq3.top() == 7 && "Top should still be 7");
+        cout << "Test 4 passed!\n"
+         << endl;
+
+        // Test 5: Push after pop to zero
+        cout << "Test 5: push after pop to zero..."
+         << endl;
+        UnorderedFastPQ<int> pq4;
+        pq4.push(1);
+        pq4.pop();
+        assert(pq4.empty() && "Should be empty after pop");
+        pq4.push(2);
+        assert(pq4.top() == 2 && "New push should work");
+        cout << "Test 5 passed!\n"
+         << endl;
+
+        // Test 6: Large number of elements
+        cout << "Test 6: large number of elements..."
+         << endl;
+        UnorderedFastPQ<int> pq5;
+        for (int i = 0; i < 1000; ++i) pq5.push(i);
+        assert(pq5.size() == 1000 && "Size should be 1000");
+        assert(pq5.top() == 999 && "Top should be max (999)");
+        cout << "Test 6 passed!\n"
+         << endl;
+    }
+    else if (pqType == "Binary")
+    {
+        // Test 1: Empty queue
+        cout << "Test 1: empty queue..."
+         << endl;
+        BinaryPQ<int> pq1;
+        assert(pq1.empty() && "Empty queue should report empty");
+        try {
+            pq1.top();
+            std::cout << "Test 1 failed: Expected exception on empty getTop\n";
+        } catch (const std::runtime_error&) {
+            std::cout << "Test 1 passed: Empty queue throws on getTop\n";
+        }
+
+        // Test 2: Single element
+        cout << "Test 2: single element..."
+         << endl;
+        pq1.push(42);
+        assert(pq1.size() == 1 && "Size should be 1");
+        assert(pq1.top() == 42 && "Top should be 42");
+        pq1.pop();
+        assert(pq1.empty() && "Queue should be empty after pop");
+        cout << "Test 2 passed!\n"
+         << endl;
+
+        // Test 3: Range-based constructor with duplicates
+        cout << "Test 3: range-based constructor with duplicates..."
+         << endl;
+        int arr[] = {3, 1, 4, 1, 5, 9, 2, 6, 5};
+        BinaryPQ<int> pq2(arr, arr + 9);
+        assert(pq2.size() == 9 && "Size should match range");
+        assert(pq2.top() == 9 && "Top should be max (9)");
+        pq2.pop();
+        assert(pq2.top() == 6 && "Next top should be 6 after pop");
+        cout << "Test 3 passed!\n"
+         << endl;
+
+        // Test 4: All equal elements
+        cout << "Test 4: all equal elements..."
+         << endl;
+        BinaryPQ<int> pq3;
+        for (int i = 0; i < 5; ++i) pq3.push(7);
+        assert(pq3.size() == 5 && "Size should be 5");
+        assert(pq3.top() == 7 && "Top should be 7");
+        pq3.pop();
+        assert(pq3.size() == 4 && "Size should decrease");
+        assert(pq3.top() == 7 && "Top should still be 7");
+        cout << "Test 4 passed!\n"
+         << endl;
+
+        // Test 5: Push after pop to zero
+        cout << "Test 5: push after pop to zero..."
+         << endl;
+        BinaryPQ<int> pq4;
+        pq4.push(1);
+        pq4.pop();
+        assert(pq4.empty() && "Should be empty after pop");
+        pq4.push(2);
+        assert(pq4.top() == 2 && "New push should work");
+        cout << "Test 5 passed!\n"
+         << endl;
+
+        // Test 6: Large number of elements
+        cout << "Test 6: large number of elements..."
+         << endl;
+        BinaryPQ<int> pq5;
+        for (int i = 0; i < 1000; ++i) pq5.push(i);
+        assert(pq5.size() == 1000 && "Size should be 1000");
+        assert(pq5.top() == 999 && "Top should be max (999)");
+        cout << "Test 6 passed!\n"
+         << endl;
+    }
+
+    cout << "\n\n********** END: Testing " << pqType << " basic functionality (regular version) succeeded! **********\n" << endl;
+} // testPriorityQueue()
 
 
 
+void runEdgeTests(const string &pqType) 
+{
+    cout << "\n\n********** START: Testing " << pqType << " edge tests to reveal version-specific bugs (regular version) **********\n" << endl;
+
+
+    if (pqType == "Unordered")
+    {
+        // Test 1: Push-pop-push with equal elements
+        {
+            cout << "Test 1: Push-pop-push with equal elements\n";
+            UnorderedPQ<int> pq;  // Replace with UnorderedPQOptimized for comparison
+            pq.push(5);
+            pq.push(5);  // Two equal max elements
+            assert(pq.top() == 5 && "Top should be 5");
+            pq.pop();    // Remove one 5
+            assert(pq.top() == 5 && "Top should still be 5");
+            pq.push(5);  // Add another 5
+            assert(pq.top() == 5 && "Top should remain 5");
+            cout << "Test 1 passed!\n"
+             << endl;
+        }
+        // Potential Bug: In Optimized, if pop invalidates topIdx but doesn’t rescan correctly,
+        // it might miss the remaining 5 or pick the wrong index after push.
+
+        // Test 2: Pop all elements then push new max
+        {
+            std::cout << "Test 2: Pop all elements then push new max\n";
+            UnorderedPQ<int> pq;
+            pq.push(3);
+            pq.push(4);
+            pq.pop();  // Remove 4
+            pq.pop();  // Remove 3
+            assert(pq.empty() && "Queue should be empty");
+            pq.push(5);  // New max after empty
+            assert(pq.top() == 5 && "Top should be 5");
+            std::cout << "Test 2 passed\n";
+        }
+        // Potential Bug: Optimized might not reset topIdx properly after emptying,
+        // causing getTop to reference an invalid index or old data.
+
+        // Test 3: Push lower value after pop, check top
+        {
+            std::cout << "Test 3: Push lower value after pop\n";
+            UnorderedPQ<int> pq;
+            pq.push(10);
+            pq.push(8);
+            pq.pop();  // Remove 10
+            assert(pq.top() == 8 && "Top should be 8");
+            pq.push(5);  // Lower than current top
+            assert(pq.top() == 8 && "Top should still be 8");
+            std::cout << "Test 3 passed\n";
+        }
+        // Potential Bug: Optimized might incorrectly update topIdx to 5 during push,
+        // assuming new elements always challenge the top.
+
+        // Test 4: Repeated pop with duplicates
+        {
+            std::cout << "Test 4: Repeated pop with duplicates\n";
+            UnorderedPQ<int> pq;
+            pq.push(7);
+            pq.push(7);
+            pq.push(7);  // Three equal max elements
+            pq.pop();    // Remove one 7
+            assert(pq.top() == 7 && "Top should be 7");
+            pq.pop();    // Remove another 7
+            assert(pq.top() == 7 && "Top should still be 7");
+            pq.pop();    // Remove last 7
+            assert(pq.empty() && "Queue should be empty");
+            std::cout << "Test 4 passed\n";
+        }
+        // Potential Bug: Optimized might fail to find the next 7 if topIdx isn’t updated
+        // after each pop, or it might not handle empty state correctly.
+
+        // Test 5: Range init with all equal, pop all
+        {
+            std::cout << "Test 5: Range init with all equal, pop all\n";
+            int arr[] = {4, 4, 4, 4};
+            UnorderedPQ<int> pq(arr, arr + 4);
+            assert(pq.top() == 4 && "Top should be 4");
+            pq.pop();
+            assert(pq.top() == 4 && "Top should be 4");
+            pq.pop();
+            pq.pop();
+            pq.pop();
+            assert(pq.empty() && "Queue should be empty");
+            std::cout << "Test 5 passed\n";
+        }
+
+    }
+    else if (pqType == "UnorderedOPT")
+    {
+        std::cout << "Running edge tests on UnorderedPQOptimized to reveal version-specific bugs...\n";
+
+        // Test 1: Push-pop-push with equal elements
+        {
+            std::cout << "Test 1: Push-pop-push with equal elements\n";
+            UnorderedFastPQ<int> pq;  // Replace with UnorderedPQOptimized for comparison
+            pq.push(5);
+            pq.push(5);  // Two equal max elements
+            assert(pq.top() == 5 && "Top should be 5");
+            pq.pop();    // Remove one 5
+            assert(pq.top() == 5 && "Top should still be 5");
+            pq.push(5);  // Add another 5
+            assert(pq.top() == 5 && "Top should remain 5");
+            std::cout << "Test 1 passed\n";
+        }
+        // Potential Bug: In Optimized, if pop invalidates topIdx but doesn’t rescan correctly,
+        // it might miss the remaining 5 or pick the wrong index after push.
+
+        // Test 2: Pop all elements then push new max
+        {
+            std::cout << "Test 2: Pop all elements then push new max\n";
+            UnorderedFastPQ<int> pq;
+            pq.push(3);
+            pq.push(4);
+            pq.pop();  // Remove 4
+            pq.pop();  // Remove 3
+            assert(pq.empty() && "Queue should be empty");
+            pq.push(5);  // New max after empty
+            assert(pq.top() == 5 && "Top should be 5");
+            std::cout << "Test 2 passed\n";
+        }
+        // Potential Bug: Optimized might not reset topIdx properly after emptying,
+        // causing getTop to reference an invalid index or old data.
+
+        // Test 3: Push lower value after pop, check top
+        {
+            std::cout << "Test 3: Push lower value after pop\n";
+            UnorderedFastPQ<int> pq;
+            pq.push(10);
+            pq.push(8);
+            pq.pop();  // Remove 10
+            assert(pq.top() == 8 && "Top should be 8");
+            pq.push(5);  // Lower than current top
+            assert(pq.top() == 8 && "Top should still be 8");
+            std::cout << "Test 3 passed\n";
+        }
+        // Potential Bug: Optimized might incorrectly update topIdx to 5 during push,
+        // assuming new elements always challenge the top.
+
+        // Test 4: Repeated pop with duplicates
+        {
+            std::cout << "Test 4: Repeated pop with duplicates\n";
+            UnorderedFastPQ<int> pq;
+            pq.push(7);
+            pq.push(7);
+            pq.push(7);  // Three equal max elements
+            pq.pop();    // Remove one 7
+            assert(pq.top() == 7 && "Top should be 7");
+            pq.pop();    // Remove another 7
+            assert(pq.top() == 7 && "Top should still be 7");
+            pq.pop();    // Remove last 7
+            assert(pq.empty() && "Queue should be empty");
+            std::cout << "Test 4 passed\n";
+        }
+        // Potential Bug: Optimized might fail to find the next 7 if topIdx isn’t updated
+        // after each pop, or it might not handle empty state correctly.
+
+        // Test 5: Range init with all equal, pop all
+        {
+            std::cout << "Test 5: Range init with all equal, pop all\n";
+            int arr[] = {4, 4, 4, 4};
+            UnorderedFastPQ<int> pq(arr, arr + 4);
+            assert(pq.top() == 4 && "Top should be 4");
+            pq.pop();
+            assert(pq.top() == 4 && "Top should be 4");
+            pq.pop();
+            pq.pop();
+            pq.pop();
+            assert(pq.empty() && "Queue should be empty");
+            std::cout << "Test 5 passed\n";
+        }
+
+    }
+    else if (pqType == "Binary")
+    {
+        // Test 1: Push-pop-push with equal elements
+        {
+            cout << "Test 1: Push-pop-push with equal elements\n";
+            BinaryPQ<int> pq;  // Replace with UnorderedPQOptimized for comparison
+            pq.push(5);
+            pq.push(5);  // Two equal max elements
+            assert(pq.top() == 5 && "Top should be 5");
+            pq.pop();    // Remove one 5
+            assert(pq.top() == 5 && "Top should still be 5");
+            pq.push(5);  // Add another 5
+            assert(pq.top() == 5 && "Top should remain 5");
+            cout << "Test 1 passed!\n"
+             << endl;
+        }
+        // Potential Bug: In Optimized, if pop invalidates topIdx but doesn’t rescan correctly,
+        // it might miss the remaining 5 or pick the wrong index after push.
+
+        // Test 2: Pop all elements then push new max
+        {
+            std::cout << "Test 2: Pop all elements then push new max\n";
+            BinaryPQ<int> pq;
+            pq.push(3);
+            pq.push(4);
+            pq.pop();  // Remove 4
+            pq.pop();  // Remove 3
+            assert(pq.empty() && "Queue should be empty");
+            pq.push(5);  // New max after empty
+            assert(pq.top() == 5 && "Top should be 5");
+            std::cout << "Test 2 passed\n";
+        }
+        // Potential Bug: Optimized might not reset topIdx properly after emptying,
+        // causing getTop to reference an invalid index or old data.
+
+        // Test 3: Push lower value after pop, check top
+        {
+            std::cout << "Test 3: Push lower value after pop\n";
+            BinaryPQ<int> pq;
+            pq.push(10);
+            pq.push(8);
+            pq.pop();  // Remove 10
+            assert(pq.top() == 8 && "Top should be 8");
+            pq.push(5);  // Lower than current top
+            assert(pq.top() == 8 && "Top should still be 8");
+            std::cout << "Test 3 passed\n";
+        }
+        // Potential Bug: Optimized might incorrectly update topIdx to 5 during push,
+        // assuming new elements always challenge the top.
+
+        // Test 4: Repeated pop with duplicates
+        {
+            std::cout << "Test 4: Repeated pop with duplicates\n";
+            BinaryPQ<int> pq;
+            pq.push(7);
+            pq.push(7);
+            pq.push(7);  // Three equal max elements
+            pq.pop();    // Remove one 7
+            assert(pq.top() == 7 && "Top should be 7");
+            pq.pop();    // Remove another 7
+            assert(pq.top() == 7 && "Top should still be 7");
+            pq.pop();    // Remove last 7
+            assert(pq.empty() && "Queue should be empty");
+            std::cout << "Test 4 passed\n";
+        }
+        // Potential Bug: Optimized might fail to find the next 7 if topIdx isn’t updated
+        // after each pop, or it might not handle empty state correctly.
+
+        // Test 5: Range init with all equal, pop all
+        {
+            std::cout << "Test 5: Range init with all equal, pop all\n";
+            int arr[] = {4, 4, 4, 4};
+            BinaryPQ<int> pq(arr, arr + 4);
+            assert(pq.top() == 4 && "Top should be 4");
+            pq.pop();
+            assert(pq.top() == 4 && "Top should be 4");
+            pq.pop();
+            pq.pop();
+            pq.pop();
+            assert(pq.empty() && "Queue should be empty");
+            std::cout << "Test 5 passed\n";
+        }
+
+    }
+
+    cout << "\n\n********** END: Testing " << pqType << " edge tests to reveal version-specific bugs (regular version) succeeded! **********\n" << endl;
+
+} // runEdgeTests()
+
+
+
+void specialTests(const string &pqType)
+{
+    cout << "\n\n********** START: Testing " << pqType << "'s equal elements corner case **********\n" << endl;
+
+
+    // Custom comparator that treats equal values differently based on position
+    struct PositionAwareCompare 
+    {
+        bool operator()(const std::pair<int, int>& a, const std::pair<int, int>& b) const {
+            // First compare values
+            if (a.first != b.first) return a.first < b.first;
+            // For equal values, prefer later positions (higher second value)
+            return a.second < b.second;
+        }
+    };
+
+
+    if (pqType == "Unordered")
+    {
+        // Create PQ with position-aware comparator
+        UnorderedPQ<std::pair<int, int>, PositionAwareCompare> pq;
+        
+        // Push elements with same value but different positions
+        pq.push({10, 1});  // Value 10, position 1
+        assert(pq.top() == std::make_pair(10, 1) && "First element should be top");
+        
+        pq.push({10, 2});  // Value 10, position 2
+        // BUG: Should select position 2 as top since it's "greater" with equal values
+        // But the implementation only updates topIdx when strictly greater
+        assert(pq.top() == std::make_pair(10, 2) && "Second element should be top");
+        
+        std::cout << "Test " << (pq.top().second == 2 ? "passed" : "FAILED") << "\n";
+    }
+    else if (pqType == "UnorderedOPT")
+    {
+        
+
+        // Create PQ with position-aware comparator
+        UnorderedFastPQ<std::pair<int, int>, PositionAwareCompare> pq;
+        
+        // Push elements with same value but different positions
+        pq.push({10, 1});  // Value 10, position 1
+        assert(pq.top() == std::make_pair(10, 1) && "First element should be top");
+        
+        pq.push({10, 2});  // Value 10, position 2
+        // BUG: Should select position 2 as top since it's "greater" with equal values
+        // But the implementation only updates topIdx when strictly greater
+        assert(pq.top() == std::make_pair(10, 2) && "Second element should be top");
+        
+        std::cout << "Test " << (pq.top().second == 2 ? "passed" : "FAILED") << "\n";
+    }
+    else if (pqType == "Binary")
+    {
+        
+
+        // Create PQ with position-aware comparator
+        BinaryPQ<std::pair<int, int>, PositionAwareCompare> pq;
+        
+        // Push elements with same value but different positions
+        pq.push({10, 1});  // Value 10, position 1
+        assert(pq.top() == std::make_pair(10, 1) && "First element should be top");
+        
+        pq.push({10, 2});  // Value 10, position 2
+        // BUG: Should select position 2 as top since it's "greater" with equal values
+        // But the implementation only updates topIdx when strictly greater
+        assert(pq.top() == std::make_pair(10, 2) && "Second element should be top");
+        
+        std::cout << "Test " << (pq.top().second == 2 ? "passed" : "FAILED") << "\n";
+    }
+
+    cout << "\n\n********** END: Testing " << pqType << "'s equal elements corner case succeeded! **********\n" << endl;
+} // specialTests()
+
+
+
+void specialTests2(const string &pqType)
+{
+    cout << "\n\n********** START: Testing " << pqType << " special tests to reveal version-specific bugs **********\n" << endl;
+
+    if (pqType == "Unordered")
+    {
+        UnorderedPQ<int> pq;
+        pq.push(10);
+        pq.push(20);
+        pq.pop();  // Remove 20
+        pq.push(5);  // Push smaller value
+        assert(pq.top() == 10);  // This might fail if the bug exists
+    }
+    else if (pqType == "UnorderedOPT")
+    {
+        UnorderedFastPQ<int> pq;
+        pq.push(10);
+        pq.push(20);
+        pq.pop();  // Remove 20
+        pq.push(5);  // Push smaller value
+        assert(pq.top() == 10);  // This might fail if the bug exists
+
+        UnorderedFastPQ<int> pq2;
+        pq2.push(10);
+        pq2.push(5);
+        pq2.pop();  // Remove 10
+        pq2.push(4);  // Push smaller value
+        assert(pq2.top() == 5);  // This might fail if the bug exists
+    }
+    else if (pqType == "Binary")
+    {
+        BinaryPQ<int> pq;
+        pq.push(10);
+        pq.push(20);
+        pq.pop();  // Remove 20
+        pq.push(5);  // Push smaller value
+        assert(pq.top() == 10);  // This might fail if the bug exists
+
+        BinaryPQ<int> pq2;
+        pq2.push(10);
+        pq2.push(5);
+        pq2.pop();  // Remove 10
+        pq2.push(4);  // Push smaller value
+        assert(pq2.top() == 5);  // This might fail if the bug exists
+    }
+
+    cout << "\n\n********** END: Testing " << pqType << " special tests to reveal version-specific bugs succeeded! **********\n" << endl;
+} // specialTests2()
+
+
+
+int binTests() 
+{
+    cout << "\n\n********** START: Testing BinaryPQ **********\n" << endl;
+
+    // Test 1: Basic operations with default constructor
+    BinaryPQ<int> pq1;
+    pq1.push(10);
+    pq1.push(20);
+    pq1.push(5);
+    std::cout << "Test 1 - Top after pushes (5,10,20): " << pq1.top() << std::endl; // Should be 20
+    assert(pq1.top() == 20);
+    pq1.pop();
+    std::cout << "Test 1 - Top after pop: " << pq1.top() << std::endl; // Should be 10
+    assert(pq1.top() == 10);
+
+
+    // Test 2: Range-based constructor
+    std::vector<int> vec = {5, 2, 8, 1, 9, 3};
+    BinaryPQ<int> pq2(vec.begin(), vec.end());
+    std::cout << "Test 2 - Top from range (5,2,8,1,9,3): " << pq2.top() << std::endl; // Should be 9
+    assert(pq2.top() == 9);
+
+
+    // Test 3: bottomUp (priority increase simulation)
+    BinaryPQ<int> pq3;
+    pq3.push(10);
+    pq3.push(20);
+    pq3.push(5);
+    // Simulate priority increase at index 2 (value 5 to something larger, say 25)
+    pq3.push(25); // Adds at index 3, but for simulation, assume we modify index 2
+    // In a real scenario, you'd modify data directly if priorities change, but for test, push and adjust
+    std::cout << "Test 3 - Top before bottomUp: " << pq3.top() << std::endl; // Should be 25 or 20
+    assert(pq3.top() == 25 || pq3.top() == 20);
+    // pq3.updatePriorities(2); // Should have no effect unless data[2] changed; for demo, assume it’s updated
+    // Note: For a real test, modify data[2] directly if priority changes
+
+
+    // Test 4: topDown (priority decrease simulation)
+    BinaryPQ<int> pq4;
+    pq4.push(30);
+    pq4.push(20);
+    pq4.push(10);
+    // Simulate priority decrease at root (index 0, value 30 to 5)
+    // In real usage, you'd modify data[0] = 5, then call topDown(0)
+    std::cout << "Test 4 - Top before topDown: " << pq4.top() << std::endl; // Should be 30
+    assert(pq4.top() == 30);
+    // Assume data[0] = 5; then call pq4.topDown(0); top should become 20
+    // For simplicity, just pop and push to simulate
+    pq4.pop();
+    pq4.push(5);
+    std::cout << "Test 4 - Top after simulated decrease: " << pq4.top() << std::endl; // Should be 20
+    assert(pq4.top() == 20);
+
+
+    // Test 5: updatePQ (rebuild heap)
+    BinaryPQ<int> pq5;
+    pq5.push(10);
+    pq5.push(5);
+    pq5.push(20);
+    pq5.updatePriorities(); // Rebuild heap, should still have 20 as top
+    std::cout << "Test 5 - Top after updatePQ: " << pq5.top() << std::endl; // Should be 20
+    assert(pq5.top() == 20);
+
+    cout << "\n\n********** END: Testing BinaryPQ **********\n" << endl;
+
+    return 0;
+} // binTests()
 
 
 
 int main()
 {
     // Basic pointer, allocate a new PQ later based on user choice.
-    Eecs281PQ<int> *pq;
+    Eecs281PQ<int> *pq1;
+    Eecs281PQ<int> *pq2;
+
     vector<string> types{ 
         "Unordered", 
+        "UnorderedFast",
         "Sorted", 
         "Binary", 
         "Pairing", 
-        "Unordered.2" 
     };
     unsigned int choice;
     
@@ -836,36 +1747,47 @@ int main()
     cout << endl;
     cout << "Select one: ";
     cin >> choice;
+
+    vector<int> tester = {1,2,3,8,7,6,13,42,65,43,87,45,56,35,29};
+        
+    // Send a subset = {6,...,87}, i.e., shrink the range
+    // by setting a ptr to the 6th elt and the the 11th 
+    // elt to get the subset [6, 45).
+    auto start = tester.begin() + 5;
+    auto end = tester.begin() + 11;
     
     if (choice == 0)
     {
         // Test using the default comparator, 
         // which organizes in ascending order.
-        pq = new UnorderedPQ<int>;
+        pq1 = new UnorderedPQ<int>;
+        pq2 = new UnorderedPQ<int>(start, end);
     } // if
     else if (choice == 1)
     {
-        pq = new SortedPQ<int>;
+        pq1 = new UnorderedFastPQ<int>;
+        pq2 = new UnorderedFastPQ<int>(start, end);
     } // else if
     else if (choice == 2)
     {
-        pq = new BinaryPQ<int>;
+        pq1 = new SortedPQ<int>;
+        pq2 = new SortedPQ<int>(start, end);
     } // else if
     else if (choice == 3)
     {
-        pq = new PairingPQ<int>;
+        binTests();
+        pq1 = new BinaryPQ<int>;
+        pq2 = new BinaryPQ<int>(start, end);
     } // else if
     else if (choice == 4)
     {
-        vector<int> tester = {1,2,3,8,7,6,13,42,65,43,87,45,56,35,29};
-        
-        // Send a subset = {6,...,87}, i.e., shrink the range
-        // by setting a ptr to the 6th elt and the the 11th 
-        // elt to get the subset [6, 45).
-        auto start = tester.begin() + 5;
-        auto end = tester.begin() + 11;
-        
-        pq = new UnorderedPQ<int>(start, end);
+        vector<int> vec;
+        vec.push_back(0);
+        vec.push_back(1);
+        testPairing(vec);
+
+        pq1 = new PairingPQ<int>;
+        pq2 = new PairingPQ<int>(start, end);
     } // else if
     else
     {
@@ -874,29 +1796,27 @@ int main()
     } // else
     
     // Send the pq.
-    testPriorityQueue(pq, types[choice]);
+    testPriorityQueue(types[choice]);
+    testPriorityQueuePtr(pq1, types[choice]);
+    testPQsCtor(pq2, types[choice]);
     
     // Start with a fresh pq once inside here.
-    testUpdatePriorities(types[choice]);
+    testUpdatePQ(types[choice]);
 
     // Test comparator robustness.
     testHiddenData(types[choice]);
-    
-    if (choice == 4)
-    {
-        testUnsortedPQ(pq, types[choice]);
-    }
-    
-    if (choice == 3)
-    {
-        vector<int> vec;
-        vec.push_back(0);
-        vec.push_back(1);
-        testPairing(vec);
-    } // if
+
+    runEdgeTests(types[choice]);
+
+    specialTests(types[choice]);
+
+    specialTests2(types[choice]);
     
     // Clean up!
-    delete pq;
+    delete pq1;
+    delete pq2;
+
+    cout << "\n\n********** ALL TESTS PASSED! **********\n" << endl;
     
     return 0;
 } // main()

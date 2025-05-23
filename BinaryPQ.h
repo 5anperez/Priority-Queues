@@ -30,11 +30,12 @@ class BinaryPQ : public Eecs281PQ<TYPE, COMP_FUNCTOR>
     using BaseClass = Eecs281PQ<TYPE, COMP_FUNCTOR>;
 
 public:
+
     // Description: Construct an empty heap with an optional comparison functor.
     // Runtime: O(1)
     explicit BinaryPQ(COMP_FUNCTOR comp = COMP_FUNCTOR()) : BaseClass{comp}
-    {
-    } // BinaryPQ
+    {} // BinaryPQ
+
 
     // Description: Construct a heap out of an iterator range with an optional
     //              comparison functor.
@@ -47,11 +48,12 @@ public:
         updatePriorities();
     } // BinaryPQ
 
+
     // Description: Destructor doesn't need any code, the data vector will
     //              be destroyed automatically.
     virtual ~BinaryPQ()
-    {
-    } // ~BinaryPQ()
+    {} // ~BinaryPQ()
+
 
     // Description: Assumes that all elements inside the heap are out of order and
     //              'rebuilds' the heap by fixing the heap invariant, i.e., the heapify approach.
@@ -60,20 +62,21 @@ public:
     {
         // Heapify: proceed from bottom, repeatidly calling fixDown()
         // no need calling it on leaves. ∆ Tree height = size() / 2
-        for (size_t i = (size() / 2); i >= 1; i--)
+        for (size_t i = (size() / NUM_CHILDREN); i >= ROOT; i--)
             fixDown(i);
     } // updatePriorities()
+
 
     // Description: Add a new element to the heap.
     // Runtime: O(log(n))
     virtual void push(const TYPE &val)
     {
-        // insert val at the back
+        // Insert val at the back, then call fixUp() on 
+        // val to bubble it up to its correct position.
         data.push_back(val);
-
-        // call fixUp() on the last element
         fixUp(data.size());
     } // push()
+
 
     // Description: Remove the most extreme (defined by 'compare') element from
     //              the heap.
@@ -82,15 +85,14 @@ public:
     // Runtime: O(log(n))
     virtual void pop()
     {
-        // overwrite the root with back
+        // Overwrite the root with the last item, then omit the 
+        // last duplicate item. Then, call fixDown() on the new
+        // root to bubble it down to its correct position.
         data.front() = data.back();
-
-        // pop the root
         data.pop_back();
-
-        // call fixDown() with the roots index
-        fixDown(1);
+        fixDown(ROOT);
     } // pop()
+
 
     // Description: Return the most extreme (defined by 'compare') element of
     //              the heap. This should be a reference for speed. It MUST be
@@ -98,27 +100,33 @@ public:
     //              might make it no longer be the most extreme element.
     // Runtime: O(1)
     virtual const TYPE &top() const
-    {
-        return getElement(1);
-    } // top()
+    { return getElement(ROOT); } 
+    // top()
+
 
     // Description: Get the number of elements in the heap.
     // Runtime: O(1)
     virtual std::size_t size() const
-    {
-        return data.size();
-    } // size()
+    { return data.size(); } 
+    // size()
+
 
     // Description: Return true if the heap is empty.
     // Runtime: O(1)
     virtual bool empty() const
-    {
-        return data.empty();
-    } // empty()
+    { return data.empty(); } 
+    // empty()
+
 
 private:
+
+    // Constants for the root and number of children.
+    const size_t ROOT = 1;
+    const size_t NUM_CHILDREN = 2;
+
     // Under the hood data structure.
     std::vector<TYPE> data;
+
 
     /// NOTE: This is from lecture slides 08, pg. 19
     // Description: fixes tree if a priority has increased.
@@ -129,17 +137,18 @@ private:
         // we are not at the root, simulate bubble up of the
         // increased priority element via swaps.
         size_t child = index,
-               parent = (child / 2); // tree ∆ structure math
-        while ((child != 1) &&       // root = 1
+               parent = (child / NUM_CHILDREN); // tree ∆ structure math
+        while ((child != ROOT) &&               // root = 1
                (this->compare(getElement(parent), getElement(child))))
         {
             std::swap(getElement(child), getElement(parent));
 
             // Move up to parent.
             child = parent;
-            parent = (child / 2);
+            parent = (child / NUM_CHILDREN);
         } // while
     } // fixUp()
+
 
     /// NOTE: This is from lecture slides 08, pg. 22
     // Description: fixes tree if a priority has decreased.
@@ -148,10 +157,10 @@ private:
     {
         // Traverse the tree height.
         size_t heapSize = size();
-        while ((index * 2) <= heapSize)
+        while ((index * NUM_CHILDREN) <= heapSize)
         {
             // Start comparisons on the left child
-            size_t j = index * 2;
+            size_t j = index * NUM_CHILDREN;
 
             // If still in the heaps range i.e. there is a right child, then
             // compare with right child and switch if right is higher priority
@@ -178,10 +187,11 @@ private:
 
             // O/W, swap the larger child and parent, then move down to
             // check if our node "index" is smaller than anyone else.
-            std::swap(getElement(j), getElement(j / 2));
+            std::swap(getElement(j), getElement(j / NUM_CHILDREN));
             index = j;
         } // while
     } // fixDown()
+
 
     // Translates base-zero indexing to base-one.
     TYPE &getElement(std::size_t i)
@@ -189,11 +199,13 @@ private:
         return data[i - 1];
     } // getElement()
 
+
     // Translates base-zero indexing to base-one.
     const TYPE &getElement(std::size_t i) const
     {
         return data[i - 1];
     } // getElement()
+
 
 }; // BinaryPQ
 

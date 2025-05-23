@@ -7,6 +7,7 @@
 
 // A specialized version of the 'heap' ADT that is implemented with an
 // underlying sorted array-based container.
+
 // Note: The most extreme element should be found at the end of the
 // 'data' container, such that traversing the iterators yields the elements in
 // sorted order.
@@ -49,7 +50,12 @@ public:
     virtual void push(const TYPE &val)
     {
         // Find the last place val should go
-        auto index = std::lower_bound(data.begin(), data.end(), val, this->compare);
+        auto index = std::lower_bound(
+            data.begin(), 
+            data.end(), 
+            val, 
+            this->compare
+        );
         
         // insert val at its lower bound
         data.insert(index, val);        
