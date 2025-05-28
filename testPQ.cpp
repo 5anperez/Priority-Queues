@@ -116,7 +116,7 @@ void testHiddenData(const string &pqType)
     struct HiddenDataMaxHeap
     {
         bool operator()(const HiddenData &a, const HiddenData &b) const
-            { return (a.data < b.data); }
+        { return (a.data < b.data); }
     };
 
 
@@ -133,11 +133,12 @@ void testHiddenData(const string &pqType)
     {
         bool operator()(const HiddenData &a, const HiddenData &b) const 
         {
+            // Odd numbers come first
             if ((a.data % 2) != (b.data % 2)) 
-            {
-                return (a.data % 2) < (b.data % 2); // Odd numbers come first
-            }
-            return a.data < b.data; // Then sort by value
+                return (a.data % 2) < (b.data % 2); 
+
+            // Then sort by value
+            return a.data < b.data; 
         }
     };
 
@@ -165,6 +166,8 @@ void testHiddenData(const string &pqType)
 
     // Would it make sense or be a good test to create a simple unordered pq w/ the hidden type and no custom comparator, or does that defeat the purpose?
 
+    /// TODO: UPDATE THIS TEST SUITE LIKE THE ONE IN THE NEWPQs/MODELPQS/TESTPQ.CPP FILE!
+
     if (pqType == "Sorted")
     {
         // Create a simple sorted pq w/ the hidden type and comparator.
@@ -186,6 +189,8 @@ void testHiddenData(const string &pqType)
         assert(pq.top().data == 3);
         pq.pop();
         assert(pq.empty());
+
+
 
         SortedPQ<HiddenData, HDAbsComparator> pq2;
         pq2.push(HiddenData(-10.5));
@@ -760,7 +765,7 @@ void testPriorityQueuePtr(Eecs281PQ<int> *pq, const string &pqType)
 
 void testSortedPQ(Eecs281PQ<int> *pq, const string &pqType)
 {
-    cout << "\n\n********** START: Testing " << pqType << " sorted functionality **********\n" << endl;
+    cout << "\n\n********** START: Testing " << pqType << " PQ's sorted-specific functionality **********\n" << endl;
 
 
     /// NOTE: WHAT SHOULD I DO WITH THE PTR??? MAYBE TRY SOME COPYING AND ASSIGNMENT TESTS???

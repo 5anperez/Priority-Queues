@@ -2275,6 +2275,563 @@ implement a derived class that declares and defines a sorted pq that has the hig
 
 CRIT:
 
+Within push(), MA calls findInsertPosition, which takes a redundant step when it converts the iterator to a position and then back to an it. It also doesnt use the member functions when appropriate, e.g., rangebased should call updatePQ()!
+
+MB's is perfect and provides a useful testing tool "at()".
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P4.5:
+
+whats the diff between using lower bound and upper bound for this implemnt?
+
+
+
+
+
+CRIT:
+
+But doesnt that contradict the sorted pq fifo behavior? 
+
+
+In our priority queue context:
+
+lower_bound maintains stability (equal elements stay in insertion order)
+
+upper_bound would group equal elements together
+
+For a priority queue, lower_bound is actually more appropriate because:
+
+It maintains the relative order of equal-priority elements
+It's more consistent with how priority queues typically 
+behave
+
+It's what we want when we say "find the first element that has higher priority"
+
+That's why the current implementation using lower_bound is correct for a priority queue. Using upper_bound would change the behavior in subtle ways that might not be what users expect from a priority queue.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P5:
+
+i am working on a sorte pq implement which is based on the SPsPQ interface and is one pq version i am interested in and will experiment with where my projects goal is to implement, experiment with, and pick out my own version of a pq (eg binary, sorted, etc) container that will eventually drive a stock market simulator however, i dont want to trivialize the implement of the pq operations by using pq prebaked functions like priority_queue<>, partial_sort(), sort_heap() etc. i dont want to use smart pointers either. but i am however using the stl for lower level vector operations since i am mostly interested in the PQ mechanics. i forgot to comment and document the sorted version, can u do that for me and make sure that it is in the same format and style as the binary version? note that most functions and the class is documented up top and whenever i use stl methods i also comment a note on their functionality. Then, can you add a function that i missed, ie, i need a "print()" function to display the entire heap for testing. and finally formulate a self contained corner case test function for sorted that will test the updatePQ method by filling up the container via push, modify/corrupt some values manually, call updatePQ and check that the top and pop values are correct. 
+
+
+
+
+
+
+// SPsPQ.h
+//
+// Base class for all special-purpose priority queues.
+//
+//
+
+
+#ifndef SPSPQ_H
+#define SPSPQ_H
+
+#include <functional>  
+
+
+template<typename T, typename Compare = std::less<T>>
+class SPsPQ 
+{
+public: // INTERFACE
+    
+    // DTOR
+    virtual ~SPsPQ() = default;
+
+    // OPERATIONS
+    virtual void push(const T& value) = 0;         
+    virtual void pop() = 0;                        
+    virtual const T& getTop() const = 0;                              
+    virtual std::size_t getSize() const = 0;          
+    virtual bool isEmpty() const = 0;
+    virtual void updatePQ() = 0;             
+
+protected: // MEMBERS
+    
+    // CTOR
+    explicit SPsPQ(const Compare& comp = Compare())
+        : compareFunctor{ comp } {}
+
+
+    Compare compareFunctor;
+}; // class SPsPQ
+
+#endif // SPSPQ_H
+
+
+
+
+
+
+
+
+
+#ifndef BIN_PQ_H
+#define BIN_PQ_H
+
+#include "SPsPQ.h"
+#include <vector>
+
+/// @brief A binary heap implementation of a priority queue.
+/// @tparam T: The type of the elements in the queue.
+/// @tparam Compare: The comparison functor to use for the priority queue.
+/// @note This implementation uses a vector to store the elements, and 
+///       a heap property to maintain the order of the elements.
+///       The heap property is maintained by the topDown() and bottomUp() 
+///       functions.
+template <typename T, typename Compare = std::less<T>>
+class BinPQ : public SPsPQ<T, Compare>
+{
+    using BaseClass = SPsPQ<T, Compare>;
+
+public:
+
+    // Default constructor
+    explicit BinPQ(const Compare &comp = Compare())
+        : BaseClass(comp) 
+    {}
+    // DEFAULT CTOR
+
+
+    // Range-based constructor
+    template <typename Iterator>
+    BinPQ(Iterator begin, Iterator end, 
+        const Compare &comp = Compare())
+            : BaseClass(comp), data(begin, end) 
+    { updatePQ(); }
+    // R-B CTOR
+
+
+    // Copy constructor
+    BinPQ(const BinPQ& other) 
+        : BaseClass(other), 
+        data(other.data) 
+    {}
+    // COPY CTOR
+
+
+    // Move constructor
+    BinPQ(BinPQ&& other) noexcept
+        : BaseClass(
+            std::move(other)),      // move the entire base class
+        data(std::move(other.data)) // move the derived class's vector
+    {}
+    // MOVE CTOR
+
+
+    // Copy assignment
+    BinPQ& operator=(const BinPQ& other) 
+    {
+        if (this != &other) 
+        {
+            // Call the base class's assignment operator,
+            // then assign the derived class's vector.
+            BaseClass::operator=(other);
+            data = other.data;
+        }
+
+        // Return the current BinPQ object.
+        return *this;
+    } // COPY ASSIGNMENT
+
+
+    // Move assignment
+    BinPQ& operator=(BinPQ&& other) noexcept 
+    {
+        if (this != &other) 
+        {
+            BaseClass::operator=(std::move(other));
+            data = std::move(other.data);
+        }
+
+        return *this;
+    } // MOVE ASSIGNMENT
+
+
+    // Destructor
+    virtual ~BinPQ() = default;
+
+
+    /// @brief Update the priority queue to maintain the heap property.
+    /// @note This function uses a post-decrement approach to overcome 
+    ///       unsigned integer overflow and the use of static_cast. 
+    ///       Read more about it in the notes!
+    void updatePQ() override
+    { 
+        if (getSize() <= 1) return;
+
+        // Start from last non-leaf node and sift down each node
+        const size_t lastParentIdx = getParentIndex(getSize() - 1);
+        for (size_t i = (lastParentIdx + 1); i-- > ROOT;)
+            topDown(i); 
+    } // updatePQ()
+
+
+
+    /// @brief Push a new value into the queue, and call 
+    ///        bottomUp() to maintain the heap property 
+    ///        by bubbling up the new element.
+    /// @param value: The value to push into the queue.
+    void push(const T &value) override
+    {
+        data.push_back(value);
+        bottomUp(getSize() - 1); 
+    } // push()
+
+
+
+    /// @brief Remove the top element, and call topDown() 
+    ///        to maintain the heap property by sifting down 
+    ///        the new root.
+    void pop() override 
+    {
+        if (isEmpty()) return;
+        data[ROOT] = std::move(data.back());
+        data.pop_back();
+        if (!isEmpty()) topDown(ROOT); 
+    } // pop()
+
+
+
+    /// @brief Get the top element (highest priority)
+    /// @return The top element of the queue.
+    const T &getTop() const override
+    {
+        if (isEmpty())
+            throw std::runtime_error("Priority queue is empty");
+        return data[ROOT]; // Root is always the top in a binary heap
+    } // getTop()
+
+
+
+    /// @brief Get the current size
+    /// @return The current size of the queue.
+    size_t getSize() const override { 
+        return data.size(); 
+    } // getSize()
+
+
+    /// @brief Check if the queue is empty
+    /// @return True if the queue is empty, false otherwise.
+    bool isEmpty() const override { 
+        return data.empty(); 
+    } // isEmpty()
+
+
+private:
+
+    /// @brief Constants 
+    static constexpr size_t ROOT = 0;
+    static constexpr size_t NUM_CHILDREN = 2;
+    
+    /// @brief Heap container
+    std::vector<T> data;
+
+
+    /// @brief Helper to calculate parent index
+    /// @param index: The index of the node to get the parent of.
+    /// @return The index of the parent of the node at index.
+    size_t getParentIndex(size_t index) const {
+        return (index - 1) / NUM_CHILDREN;
+    } // getParentIndex()
+
+
+    /// @brief Helper to calculate left child index
+    /// @param index: The index of the node to get the left child of.
+    /// @return The index of the left child of the node at index.
+    size_t getLeftChildIndex(size_t index) const {
+        return NUM_CHILDREN * index + 1;
+    } // getLeftChildIndex()
+
+
+    /// @brief Helper to calculate right child index  
+    /// @param index: The index of the node to get the right child of.
+    /// @return The index of the right child of the node at index.
+    size_t getRightChildIndex(size_t index) const {
+        return NUM_CHILDREN * index + NUM_CHILDREN;
+    } // getRightChildIndex()
+
+
+    /// @brief Helper to check if compareFunctor says a < b 
+    ///         (a has lower priority than b)
+    /// @param a: The first element to compare.
+    /// @param b: The second element to compare.
+    /// @return True if a has lower priority than b, false otherwise.
+    bool hasLowerPriority(const T& a, const T& b) const {
+        return this->compareFunctor(a, b);
+    } // hasLowerPriority()
+
+
+
+    /// @brief Fix heap property top-down (fix down) when 
+    ///         priority decreases at given index.
+    /// @param index: The index of the node to sift down.
+    void topDown(size_t index) 
+    {
+        const size_t size = getSize();
+        while (true) 
+        {
+            size_t largest = index;
+            const size_t left = getLeftChildIndex(index);
+            const size_t right = getRightChildIndex(index);
+
+            // Check if children exist, and if so, grab the larger one.
+            // Then check if it is larger than the current largest, i.e., the parent.
+            if (left < size && hasLowerPriority(data[largest], data[left])) 
+                largest = left;
+            
+            if (right < size && hasLowerPriority(data[largest], data[right])) 
+                largest = right;
+            
+
+            // If largest is not the current index, swap and continue sifting down
+            if (largest != index) {
+                std::swap(data[index], data[largest]);
+                index = largest;
+            } else {
+                break; // Heap property restored
+            }
+        }
+    } // topDown()
+
+
+
+    /// @brief Fix heap property bottom-up (fix up) when 
+    ///         priority increases at given index.
+    /// @param index: The index of the node to sift up.
+    void bottomUp(size_t index)
+    {
+        // While not at root, check if the parent is 
+        // lower priority than the current node.
+        while (index > ROOT)
+        {
+            const size_t parent = getParentIndex(index);
+            if (hasLowerPriority(data[parent], data[index]))
+            {
+                std::swap(data[parent], data[index]);
+                index = parent; // move up to the parent
+            } else {
+                break; // Heap property restored
+            }
+        }
+    } // bottomUp()
+
+
+}; // class BinPQ
+
+#endif // BIN_PQ_H
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#ifndef SORTED_PQ_H
+#define SORTED_PQ_H
+
+#include "SPsPQ.h"
+#include <vector>
+#include <algorithm>
+#include <stdexcept>
+
+template <typename T, typename Compare = std::less<T>>
+class SortedPQ : public SPsPQ<T, Compare>
+{
+
+public:
+
+    
+    explicit SortedPQ(const Compare &comp = Compare())
+        : SPsPQ<T, Compare>(comp) {}
+
+
+    
+    template <typename Iterator>
+    SortedPQ(Iterator begin, Iterator end, const Compare &comp = Compare())
+        : SPsPQ<T, Compare>(comp), data(begin, end) {
+        updatePQ();
+    }
+
+
+    
+    SortedPQ(const SortedPQ& other) 
+        : SPsPQ<T, Compare>(other), data(other.data) {}
+
+    
+    SortedPQ(SortedPQ&& other) noexcept
+        : SPsPQ<T, Compare>(std::move(other)), data(std::move(other.data)) {}
+
+    
+    SortedPQ& operator=(const SortedPQ& other) {
+        if (this != &other) {
+            SPsPQ<T, Compare>::operator=(other);
+            data = other.data;
+        }
+        return *this;
+    }
+
+    
+    SortedPQ& operator=(SortedPQ&& other) noexcept {
+        if (this != &other) {
+            SPsPQ<T, Compare>::operator=(std::move(other));
+            data = std::move(other.data);
+        }
+        return *this;
+    }
+
+
+
+    virtual ~SortedPQ() = default;
+
+
+
+    void push(const T &value) override 
+    {
+        auto pos = lower_bound(
+            data.begin(), 
+            data.end(), 
+            value, 
+            this->compareFunctor
+        );
+
+        data.insert(pos, value);
+    }
+
+
+
+    void pop() override {
+        if (!isEmpty()) {
+            data.pop_back(); 
+        }
+    }
+
+
+
+    const T &getTop() const override {
+        if (isEmpty())
+            throw runtime_error("Priority queue is empty");
+        return data.back(); 
+    }
+
+
+
+    size_t getSize() const override { 
+        return data.size(); 
+    } 
+
+
+    bool isEmpty() const override { 
+        return data.empty(); 
+    }
+
+
+    void updatePQ() override {
+        if (getSize() <= 1) return;
+        std::sort(data.begin(), data.end(), this->compareFunctor);
+    }
+
+
+    
+    const T& at(std::size_t index) const {
+        if (index >= getSize())
+            throw std::out_of_range("Index out of range");
+        return data[index];
+    }
+
+private:
+
+    std::vector<T> data;
+};
+
+#endif 
+
+
+
+
+
+
+
+
+
+
+
+
+
+CRIT:
 
 
 
@@ -2329,9 +2886,11 @@ CRIT:
 
 
 
-PX:
 
-SORTED PQ SHOULD NOT HAVE ANY LOOPS ANYWHERE!!! THE STL CAN HANDLE EVERYTHING!!!
+
+
+
+
 
 
 

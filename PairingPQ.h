@@ -20,6 +20,7 @@ public:
     // Each node within the pairing heap
     class Node
     {
+
     public:
         
         // Node ctor
@@ -39,7 +40,9 @@ public:
         // statement in PairingPQ's add_node() function).
         friend PairingPQ;
         
+        
     private:
+
         TYPE elt;
         Node *child;
         Node *sibling;
