@@ -5,6 +5,9 @@
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
+#include <iostream>
+
+using namespace std;
 
 // A specialized version of the 'heap' ADT that is implemented with an
 // underlying sorted array-based container.
@@ -59,6 +62,7 @@ public:
     }
 
 
+    // Destructor
     virtual ~SortedPQ() = default;
 
 
@@ -68,7 +72,7 @@ public:
     {
         // Use binary search to find insertion point, i.e., 
         // the first element that has higher priority than value
-        auto pos = std::lower_bound( // FIFO behavior
+        auto pos = lower_bound( // FIFO behavior
             data.begin(), 
             data.end(), 
             value, 
@@ -125,16 +129,48 @@ public:
     /// @param index The index of the element to get.
     /// @note The index is 0-based.
     // Additional method for testing: get element at index (for verification)
-    const T& at(std::size_t index) const {
+    const T& at(std::size_t index) const 
+    {
         if (index >= getSize())
             throw std::out_of_range("Index out of range");
         return data[index];
     } // at()
 
+
+
+    /// @brief Print all elements in the priority queue.
+    /// @note Elements are printed from lowest to highest priority
+    ///       (i.e., in the order they appear in the sorted vector).
+    void print() const 
+    {
+        cout << "SortedPQ [size=" << getSize() << "]: ";
+        if (isEmpty()) {
+            cout << "(empty)";
+        } else {
+            cout << "{ ";
+            for (size_t i = 0; i < data.size(); ++i) {
+                cout << data[i];
+                if (i < data.size() - 1) cout << ", ";
+            }
+            cout << " }";
+            cout << " (top=" << data.back() << ")";
+        }
+        cout << endl;
+    } // print()
+
+
+    /// @brief Get direct access to internal data (for testing only).
+    /// @return Reference to the internal data vector.
+    /// @note This breaks encapsulation and should only be used for testing!
+    vector<T>& getInternalData() 
+    {
+        return data;
+    } // getInternalData()
+
 private:
     
     // Priority queue's underlying container
-    std::vector<T> data;
+    vector<T> data;
 }; // SortedPQ
 
 #endif // SORTED_PQ_H

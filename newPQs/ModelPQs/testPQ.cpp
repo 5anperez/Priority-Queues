@@ -1,9 +1,11 @@
 // #include "MA_PQ.h"
-// #include "MB_PQ.h"
+#include "MB_PQ.h"
+#include "SPsPQ.h"
 #include "UnorderedSPsPQ.h" 
 #include "UnorderedFastSPsPQ.h"
 #include "BinPQ.h"
 #include "SortedPQ.h"
+// #include "PairingPQ.h"
 
 #include <vector>
 #include <cassert>
@@ -181,6 +183,13 @@ void testHiddenData(const string &pqType)
         pq4 = new SortedPQ<HiddenData, OddFirstComp>;
         pqL = new SortedPQ<HiddenData, decltype(customComp)>;
     }
+    else if (pqType == "Pairing")
+    {
+        pq = new PairingPQ<HiddenData, HiddenDataMaxHeap>;
+        pq2 = new PairingPQ<HiddenData, HDAbsComparator>;
+        pq4 = new PairingPQ<HiddenData, OddFirstComp>;
+        pqL = new PairingPQ<HiddenData, decltype(customComp)>;
+    }
 
 
     /// @b Populate: pq
@@ -349,6 +358,10 @@ void testUpdatePQ(const string &pqType)
     else if (pqType == "Sorted")
     {
         pq = new SortedPQ<int *, IntPtrComp>;
+    } // else if
+    else if (pqType == "Pairing")
+    {
+        pq = new PairingPQ<int *, IntPtrComp>;
     } // else if
     
     if (!pq)
@@ -908,9 +921,98 @@ void testSortedPQ(SPsPQ<int> *pq, const string &pqType)
     
     /// TODO: Add more assign, move, and copy testing here!
     
-    cout << "\n\n********** END: Testing " << pqType << " sorted functionality succeeded! **********\n" << endl;
+    cout << "\n\n********** END: Testing " << pqType << " PQ's sorted functionality succeeded! **********\n" << endl;
     
 } // testSortedPQ()
+
+
+
+/// @brief Test function for SortedPQ::updatePQ() method.
+/// @note This function tests the updatePQ method by:
+///       1. Creating a sorted priority queue (default is max-heap behavior)
+///       2. Pushing valid elements
+///       3. Corrupting the internal data
+///       4. Calling updatePQ to fix the corruption
+///       5. Verifying correct operation after repair
+void testSortedPQUpdateCornerCase() 
+{
+    std::cout << "\n=== Testing SortedPQ updatePQ() Corner Case ===" << std::endl;
+    
+    // Create a max-heap (using default std::less - highest value has highest priority)
+    SortedPQ<int> pq;
+    
+    // Step 1: Push some values to create a valid sorted PQ
+    std::cout << "Step 1: Pushing values 10, 30, 20, 50, 40..." << std::endl;
+    pq.push(10);
+    pq.push(30);
+    pq.push(20);
+    pq.push(50);
+    pq.push(40);
+    
+    std::cout << "After pushing: ";
+    pq.print();
+    std::cout << "Top element: " << pq.getTop() << " (should be 50)" << std::endl;
+    
+    // Step 2: Corrupt the internal data
+    std::cout << "\nStep 2: Corrupting internal data..." << std::endl;
+    std::vector<int>& data = pq.getInternalData();
+    
+    // Current correct order: [10, 20, 30, 40, 50]
+    // Corrupt by reversing the order
+    std::reverse(data.begin(), data.end());
+    // Now corrupted to: [50, 40, 30, 20, 10]
+    
+    std::cout << "After corruption: ";
+    pq.print();
+    std::cout << "Top element: " << pq.getTop() << " (incorrectly shows " << pq.getTop() << ")" << std::endl;
+    
+    // Step 3: Call updatePQ to fix the corruption
+    std::cout << "\nStep 3: Calling updatePQ() to fix corruption..." << std::endl;
+    pq.updatePQ();
+    
+    std::cout << "After updatePQ: ";
+    pq.print();
+    
+    // Step 4: Verify correct operation
+    std::cout << "\nStep 4: Verifying correct operation..." << std::endl;
+    std::cout << "Top element: " << pq.getTop() << " (should be 50)" << std::endl;
+    
+    // Pop all elements and verify they come out in correct order
+    std::cout << "Popping all elements: ";
+    std::vector<int> poppedOrder;
+    while (!pq.isEmpty()) {
+        poppedOrder.push_back(pq.getTop());
+        pq.pop();
+    }
+    
+    // Display popped order
+    for (size_t i = 0; i < poppedOrder.size(); ++i) {
+        std::cout << poppedOrder[i];
+        if (i < poppedOrder.size() - 1) std::cout << " -> ";
+    }
+    std::cout << std::endl;
+    
+    // Verify the order was correct (should be 50, 40, 30, 20, 10 for max-heap)
+    bool testPassed = true;
+    std::vector<int> expectedOrder = {50, 40, 30, 20, 10};
+    for (size_t i = 0; i < expectedOrder.size(); ++i) {
+        if (poppedOrder[i] != expectedOrder[i]) {
+            testPassed = false;
+            break;
+        }
+    }
+    
+    std::cout << "\nTest Result: " << (testPassed ? "PASSED" : "FAILED") << std::endl;
+    
+    // Additional test: updatePQ on empty queue
+    std::cout << "\nAdditional test: updatePQ on empty queue..." << std::endl;
+    SortedPQ<int> emptyPQ;
+    emptyPQ.updatePQ(); // Should not crash
+    std::cout << "Empty PQ after updatePQ: ";
+    emptyPQ.print();
+    
+    std::cout << "\n=== Test Complete ===" << std::endl;
+} // testSortedPQUpdateCornerCase()
 
 
 
@@ -1124,6 +1226,23 @@ void testPriorityQueue(const string &pqType)
         // Test 6: Large number of elements
         pq5 = new SortedPQ<int>;
     }
+    else if (pqType == "Pairing")
+    {
+        // Test 1: Empty queue
+        pq1 = new PairingPQ<int>;
+
+        // Test 3: Range-based constructor with duplicates
+        pq2 = new PairingPQ<int>(arr, arr + 9);
+
+        // Test 4: All equal elements
+        pq3 = new PairingPQ<int>;
+
+        // Test 5: Push after pop to zero
+        pq4 = new PairingPQ<int>;
+
+        // Test 6: Large number of elements
+        pq5 = new PairingPQ<int>;
+    }
 
 
     // Test 1: Empty queue
@@ -1137,7 +1256,13 @@ void testPriorityQueue(const string &pqType)
         cout << "Test 1 passed: Empty queue throws on getTop\n";
     }
 
-    pq1->pop(); // Should not crash on empty queue
+    try {
+        pq1->pop(); // Should not crash on empty queue
+        cout << "Test 1 failed: Expected exception on empty pop\n";
+    } catch (const runtime_error&) {
+        cout << "Test 1 passed: Empty queue throws on pop\n";
+    }
+    
     assert(pq1->isEmpty() && "Queue should still be empty after pop on empty");
 
 
@@ -1363,7 +1488,23 @@ void runEdgeTests(const string &pqType)
 
         // Test 5: Range init with all equal, pop all
         pq5 = new SortedPQ<int>(arr, arr + 4);
+    }
+    else if (pqType == "Pairing")
+    {
+        // Test 1: Push-pop-push with equal elements
+        pq1 = new PairingPQ<int>();
 
+        // Test 2: Pop all elements then push new max
+        pq2 = new PairingPQ<int>();
+
+        // Test 3: Push lower value after pop, check top
+        pq3 = new PairingPQ<int>();
+
+        // Test 4: Repeated pop with duplicates
+        pq4 = new PairingPQ<int>();
+
+        // Test 5: Range init with all equal, pop all
+        pq5 = new PairingPQ<int>(arr, arr + 4);
     }
     else
     {
@@ -1493,6 +1634,10 @@ void specialTests(const string &pqType)
         // Create PQ with position-aware comparator
         pq1 = new SortedPQ<pair<int, int>, PositionAwareCompare>();
     }
+    else if (pqType == "Pairing")
+    {
+        pq1 = new PairingPQ<pair<int, int>, PositionAwareCompare>();
+    }
     else
     {
         delete pq1;
@@ -1543,6 +1688,11 @@ void specialTests2(const string &pqType)
     {
         pq1 = new SortedPQ<int>();
         pq2 = new SortedPQ<int>();
+    }
+    else if (pqType == "Pairing")
+    {
+        pq1 = new PairingPQ<int>();
+        pq2 = new PairingPQ<int>();
     }
     else
     {
@@ -1897,6 +2047,731 @@ void additionalBinPQEdgeTests()
 
 
 
+// Test the pairing heap's range-based constructor, copy constructor,
+// and operator=().
+//
+void testPairing(vector<int> & vec, bool turnOne = true)
+{
+    cout << "\n\n********** START: Testing PairingPQ TURNS {1 || 2} **********\n" << endl;
+
+    if (turnOne)
+    {
+        cout << "\nTest TURN {1.1: Range Ctor, Copy Ctor, and Assignment Op - Basic tests}\n";
+        SPsPQ<int> * pq1 = new PairingPQ<int>(vec.begin(), vec.end());
+        SPsPQ<int> * pq2 = new PairingPQ<int>(*((PairingPQ<int> *)pq1));
+        
+        // This line is different just to show the different ways to declare a
+        // pairing heap: as an SPsPQ above, and as a PairingPQ below. Yay for inheritance!
+        
+        PairingPQ<int> *pq3 = new PairingPQ<int>();
+        *pq3 = *((PairingPQ<int> *)pq2);
+        
+        pq1->push(3);
+        pq2->pop();
+        assert(pq1->getSize() == 3); // 0,1,3
+        assert(!pq1->isEmpty());
+        assert(pq1->getTop() == 3);
+        pq2->push(pq3->getTop());
+        assert(pq2->getTop() == pq3->getTop());
+        
+        pq1->push(45);
+        pq1->push(7);
+        pq1->push(1);
+        pq1->push(15);
+        pq1->push(12);
+        assert(pq1->getTop() == 45);
+        pq1->pop();
+        assert(pq1->getTop() == 15);
+        pq1->pop();
+        assert(pq1->getTop() == 12);
+        pq1->push(45);
+        assert(pq1->getTop() == 45);
+        pq1->push(45);
+        pq1->push(45);
+        pq1->push(30);
+        assert(pq1->getTop() == 45);
+        pq1->push(33);
+        pq1->push(20);
+        pq1->pop();
+        pq1->pop();
+        pq1->pop();
+        assert(pq1->getTop() == 33);
+    
+        cout << "Calling destructors" << endl;
+        delete pq1;
+        delete pq2;
+        delete pq3;
+        cout << "\nTest TURN {1.1: Basic tests} passed!\n";
+
+
+
+        cout << "\nTest TURN {1.2: Testing addNode() and updateElt() - Basic & Edge tests}\n";
+
+        // Test 1: Basic addNode functionality
+        {
+            cout << "Test 1: Basic addNode functionality..." << endl;
+            PairingPQ<int> pq;
+            
+            // Add to empty heap
+            PairingPQ<int>::Node* node1 = pq.addNode(10);
+            assert(pq.getSize() == 1);
+            assert(pq.getTop() == 10);
+            assert(node1->getElt() == 10);
+            assert(node1->operator*() == 10);  // Test dereference operator
+            
+            // Add to non-empty heap
+            PairingPQ<int>::Node* node2 = pq.addNode(20);
+            assert(pq.getSize() == 2);
+            assert(pq.getTop() == 20);  // pq = {10, 20}
+            pq.updateElt(node2, 35);    // pq = {10, 35}
+            assert(pq.getTop() == 35);  
+            assert(node2->getElt() == 35);
+            assert(node2->operator*() == 35);  // Test dereference operator
+            
+            // Add smaller value
+            PairingPQ<int>::Node* node3 = pq.addNode(5); // pq = {10, 35, 5}
+            assert(pq.getSize() == 3);
+            assert(pq.getTop() == 35);  // Top should still be 35
+            assert(node3->getElt() == 5);
+
+            // Update a non-root node
+            pq.updateElt(node3, 100); // pq = {10, 35, 100}
+            pq.updateElt(node1, 111); // pq = {111, 35, 100} 
+            assert(pq.getTop() == 111);
+            
+            cout << "Test 1 passed!" << endl;
+        }
+
+        // Test 2: Node pointer validity after operations
+        {
+            cout << "Test 2: Node pointer validity..." << endl;
+            PairingPQ<int> pq;
+            
+            PairingPQ<int>::Node* node1 = pq.addNode(15);
+            PairingPQ<int>::Node* node2 = pq.addNode(25);
+            PairingPQ<int>::Node* node3 = pq.addNode(10);
+            
+            // Pointers should remain valid
+            assert(node1->getElt() == 15);
+            assert(node2->getElt() == 25);
+            assert(node3->getElt() == 10);
+            
+            // After other operations
+            pq.push(30);  // Regular push
+            assert(node1->getElt() == 15);  // Still valid
+            assert(node2->getElt() == 25);  // Still valid
+            assert(node3->getElt() == 10);  // Still valid
+            
+            cout << "Test 2 passed!" << endl;
+        }
+
+        // Test 3: updateElt() - Valid updates (more extreme values)
+        {
+            cout << "Test 3: updateElt() with valid updates..." << endl;
+            PairingPQ<int> pq;
+            
+            PairingPQ<int>::Node* node1 = pq.addNode(10);
+            PairingPQ<int>::Node* node2 = pq.addNode(20);
+            PairingPQ<int>::Node* node3 = pq.addNode(15);
+            
+            assert(pq.getTop() == 20); // pq = {10, 20, 15}
+            
+            // Update to higher priority (valid - more extreme)
+            pq.updateElt(node1, 25);  // 10 → 25, pq = {25, 20, 15}
+            assert(node1->getElt() == 25);
+            assert(pq.getTop() == 25);  // Should become new top
+            
+            // Update another node
+            pq.updateElt(node3, 30);  // 15 → 30, pq = {25, 20, 30}
+            assert(node3->getElt() == 30);
+            assert(pq.getTop() == 30);  // Should become new top
+
+            pq.updateElt(node2, 100); // pq = {100, 20, 30}
+            assert(node2->getElt() == 100);
+            assert(pq.getTop() == 100);
+            
+            cout << "Test 3 passed!" << endl;
+        }
+
+
+        // Test 4: updateElt() - Root node updates
+        {
+            cout << "Test 4: updateElt() on root node..." << endl;
+            PairingPQ<int> pq;
+            
+            PairingPQ<int>::Node* root = pq.addNode(20);
+            pq.addNode(10);
+            pq.addNode(15);
+            
+            assert(pq.getTop() == 20);
+            
+            // Update root to even higher value
+            pq.updateElt(root, 25);
+            assert(root->getElt() == 25);
+            assert(pq.getTop() == 25);
+            
+            cout << "Test 4 passed!" << endl;
+        }
+
+
+        // Test 5: updateElt() - Non-root updates that don't change top
+        {
+            cout << "Test 5: updateElt() on non-root without top change..." << endl;
+            PairingPQ<int> pq;
+            
+            pq.addNode(30);  // Will be top
+            PairingPQ<int>::Node* node2 = pq.addNode(10);
+            PairingPQ<int>::Node* node3 = pq.addNode(5);
+            
+            assert(pq.getTop() == 30);
+            
+            // Update smaller value, but still less than top
+            pq.updateElt(node2, 15);  // 10 → 15 (still < 30)
+            assert(node2->getElt() == 15);
+            assert(pq.getTop() == 30);  // Top unchanged
+            
+            pq.updateElt(node3, 12);   // 5 → 12 (still < 30)
+            assert(node3->getElt() == 12);
+            assert(pq.getTop() == 30);  // Top unchanged
+            
+            cout << "Test 5 passed!" << endl;
+        }
+
+
+
+        // Test 6: updateElt() - Single element heap
+        {
+            cout << "Test 6: updateElt() on single element heap..." << endl;
+            PairingPQ<int> pq;
+            
+            PairingPQ<int>::Node* onlyNode = pq.addNode(10);
+            assert(pq.getSize() == 1);
+            assert(pq.getTop() == 10);
+            
+            pq.updateElt(onlyNode, 20);
+            assert(onlyNode->getElt() == 20);
+            assert(pq.getTop() == 20);
+            assert(pq.getSize() == 1);
+            
+            cout << "Test 6 passed!" << endl;
+        }
+        
+        // Test 7: Complex scenario - multiple updates and operations
+        {
+            cout << "Test 7: Complex mixed operations..." << endl;
+            PairingPQ<int> pq;
+            
+            vector<PairingPQ<int>::Node*> nodes;
+            
+            // Add several nodes
+            nodes.push_back(pq.addNode(10));
+            nodes.push_back(pq.addNode(5));
+            nodes.push_back(pq.addNode(20));
+            nodes.push_back(pq.addNode(15));
+            nodes.push_back(pq.addNode(8));
+            
+            assert(pq.getTop() == 20);
+            assert(pq.getSize() == 5);
+            
+            // Update multiple elements
+            pq.updateElt(nodes[1], 25);  // 5 → 25 (should become top)
+            assert(pq.getTop() == 25);
+            
+            pq.updateElt(nodes[4], 30);  // 8 → 30 (should become new top)
+            assert(pq.getTop() == 30);
+            
+            // Mix with regular operations
+            pq.push(12);  // Regular push
+            assert(pq.getTop() == 30);  // Should still be 30
+            
+            pq.updateElt(nodes[0], 35);  // 10 → 35 (should become new top)
+            assert(pq.getTop() == 35);
+            
+            // Verify all nodes still have correct values
+            assert(nodes[0]->getElt() == 35);
+            assert(nodes[1]->getElt() == 25);
+            assert(nodes[2]->getElt() == 20);
+            assert(nodes[3]->getElt() == 15);
+            assert(nodes[4]->getElt() == 30);
+            
+            cout << "Test 7 passed!" << endl;
+        }
+        
+        // Test 8: updateElt() with min-heap comparator
+        {
+            cout << "Test 8: updateElt() with min-heap..." << endl;
+            auto minComp = [](int a, int b) { return a > b; };
+            PairingPQ<int, decltype(minComp)> minPQ(minComp);
+            
+            auto node1 = minPQ.addNode(20);
+            auto node2 = minPQ.addNode(10);
+            auto node3 = minPQ.addNode(30);
+            
+            assert(minPQ.getTop() == 10);  // Min-heap, so smallest is top
+            
+            // In min-heap, "more extreme" means smaller
+            minPQ.updateElt(node1, 5);   // 20 → 5 (more extreme for min-heap)
+            assert(minPQ.getTop() == 5); // pq = {5, 10, 30}
+            
+            minPQ.updateElt(node3, 8);   // 30 → 8 (more extreme for min-heap)
+            assert(minPQ.getTop() == 5); // Should still be 5, pq = {5, 10, 8}
+
+            minPQ.updateElt(node2, -1); // pq = {5, -1, 8}
+            assert(minPQ.getTop() == -1);
+            
+            cout << "Test 8 passed!" << endl;
+        }
+        
+        // Test 9: Stress test - many nodes and updates
+        {
+            cout << "Test 9: Stress test with many updates..." << endl;
+            PairingPQ<int> pq;
+            vector<PairingPQ<int>::Node*> nodes;
+            
+            // Add many nodes
+            for (int i = 0; i < 100; ++i) {
+                nodes.push_back(pq.addNode(i));
+            }
+            
+            assert(pq.getSize() == 100);
+            assert(pq.getTop() == 99);
+            
+            // Update every 10th node to a higher value
+            for (size_t i = 0; i < nodes.size(); i += 10) {
+                int newVal = 100 + static_cast<int>(i);
+                pq.updateElt(nodes[i], newVal);
+                assert(nodes[i]->getElt() == newVal);
+            }
+            
+            // Top should be the highest updated value
+            assert(pq.getTop() == 190);  // 100 + 90
+            
+            cout << "Test 9 passed!" << endl;
+        }
+        
+        // Test 10: Edge case - updateElt() precondition testing
+        {
+            cout << "Test 10: Testing updateElt() precondition behavior..." << endl;
+            PairingPQ<int> pq;
+            
+            auto node = pq.addNode(20);
+            
+            // This should work (20 → 25 is more extreme)
+            pq.updateElt(node, 25);
+            assert(node->getElt() == 25);
+            
+            // Test what happens with invalid update (less extreme)
+            // Note: Your implementation checks the precondition, so this should do nothing
+
+            try {
+                pq.updateElt(node, 15);  // 25 → 15 (less extreme, should be ignored)
+                cout << "❌ Test 10 failed! (should have thrown invalid_argument)" << endl;
+            } catch(const std::invalid_argument&) {
+                assert(node->getElt() == 25);  // Should remain unchanged
+                cout << "Test 10 passed! (threw invalid_argument as expected)" << endl;
+            }
+        }
+
+        cout << "\nTest TURN {1.2: Basic & Edge tests} passed!\n";
+        
+        cout << "\n\n********** END: TURN {1} Complete ✅ **********\n" << endl;
+    }
+    else
+    {
+        cout << "\nTest TURN {2: Range Ctor, Copy Ctor, and Assignment Op - Edge tests}\n";
+
+        cout << "Testing empty vector with range constructor..." << endl;
+        PairingPQ<int> pq1 {vec.begin(), vec.end()};
+        PairingPQ pq2 {pq1};
+
+        pq2.push(3); // make it non empty
+
+        PairingPQ<int> pq3;
+        assert(pq3.isEmpty());
+        assert(pq2.getSize() == 1);
+        assert(pq2.getTop() == 3);
+
+        pq2 = pq3;
+        assert(pq2.getSize() == 0);
+        assert(pq2.isEmpty());
+        cout << "Testing empty vector passed!\n" << endl;
+
+
+        // Test deep copy - changes to original shouldn't affect copy
+        cout << "Testing deep copy independence..." << endl;
+        PairingPQ<int> original;
+        original.push(1);
+        original.push(5);
+        original.push(3);
+
+        // Copy and verify independence
+        PairingPQ<int> copy(original);
+        assert(copy.getTop() == original.getTop());
+
+        // Modify original
+        original.push(10);
+        assert(original.getTop() == 10);
+        assert(copy.getTop() == 5);  // Copy should be unchanged!
+
+        // Modify copy
+        copy.push(15);
+        assert(copy.getTop() == 15);
+        assert(original.getTop() == 10);  // Original should be unchanged!
+
+        // Pop from original
+        original.pop();  // Remove 10
+        assert(original.getTop() == 5);
+        assert(copy.getTop() == 15);  // Copy still unaffected
+        cout << "Testing deep copy independence passed!\n" << endl;
+
+
+        // Test chained assignments: a = b = c
+        cout << "Testing chained assignment..." << endl;
+        PairingPQ<int> chain1, chain2, chain3;
+        chain3.push(99);
+        chain3.push(88);
+
+        chain1 = chain2 = chain3;  // Chained assignment
+        assert(chain1.getTop() == 99);
+        assert(chain2.getTop() == 99);
+        assert(chain3.getTop() == 99);
+
+        // Verify they're independent
+        chain1.pop();
+        assert(chain1.getTop() == 88);
+        assert(chain2.getTop() == 99);  // Unchanged
+        assert(chain3.getTop() == 99);  // Unchanged
+        cout << "Testing chained assignment passed!\n" << endl;
+
+
+
+        // Test copying large heap
+        cout << "Testing large heap copy..." << endl;
+        PairingPQ<int> largePQ;
+        for (int i = 0; i < 1000; ++i) {
+            largePQ.push(i);
+        }
+
+        PairingPQ<int> largeCopy(largePQ);
+        assert(largeCopy.getSize() == 1000);
+        assert(largeCopy.getTop() == 999);
+
+        // Verify structure by popping all elements
+        for (int i = 999; i >= 0; --i) {
+            assert(largeCopy.getTop() == i);
+            largeCopy.pop();
+        }
+        assert(largeCopy.isEmpty());
+        cout << "Testing large heap copy passed!\n" << endl;
+
+
+        // Test your specific traversal logic edge case
+        cout << "Testing copy constructor traversal edge case..." << endl;
+        // Create a heap with specific structure that might break traversal
+        PairingPQ<int> specialPQ;
+        // Add elements in an order that creates complex tree structure
+        vector<int> specialOrder = {50, 25, 75, 10, 30, 60, 80, 5, 15, 27, 35};
+        for (int val : specialOrder) {
+            specialPQ.push(val);
+        }
+
+        PairingPQ<int> specialCopy(specialPQ);
+        assert(specialCopy.getSize() == specialOrder.size());
+        assert(specialCopy.getTop() == 80);
+
+        // Verify all elements are present by extracting them
+        vector<int> extracted;
+        while (!specialCopy.isEmpty()) {
+            extracted.push_back(specialCopy.getTop());
+            specialCopy.pop();
+        }
+        assert(extracted.size() == specialOrder.size());
+        // Should be in descending order due to max-heap property
+        assert(is_sorted(extracted.rbegin(), extracted.rend()));
+        cout << "Testing copy constructor traversal edge case passed!\n" << endl;
+        
+
+        // Test copying with custom comparator
+        cout << "Testing custom comparator copy..." << endl;
+        auto minComp = [](int a, int b) { return a > b; };  // Min-heap
+        PairingPQ<int, decltype(minComp)> minPQ(minComp);
+        minPQ.push(5);
+        minPQ.push(1);
+        minPQ.push(8);
+        assert(minPQ.getTop() == 1);  // Minimum element
+
+        PairingPQ<int, decltype(minComp)> minCopy(minPQ);
+        assert(minCopy.getTop() == 1);
+        minCopy.push(0);
+        assert(minCopy.getTop() == 0);  // Still min-heap behavior
+        cout << "Testing custom comparator copy passed!\n" << endl;
+
+        cout << "\n\n********** END: TURN {2} Complete ✅ **********\n" << endl;
+    }
+    
+    cout << "\n\n********** END: Testing PairingPQ TURNS Complete ✅ **********\n" << endl;
+} // testPairing()
+
+
+
+/// @brief Self-contained test function for PairingPQ.
+/// @note Tests basic operations and the updatePQ method with corruption scenarios.
+void testPairingPQ() 
+{
+    cout << "\n\n********** START: Testing PairingPQ Invariants: Basic & Corner Cases **********\n" << endl;
+    
+    // Test 1: Basic operations
+    {
+        cout << "\nTest 1: Basic top/pop operations\n";
+        PairingPQ<int> pq;
+        
+        // Push some values
+        vector<int> values = {5, 1, 8, 3, 9, 2, 7};
+        for (int val : values) {
+            pq.push(val);
+        }
+        
+        cout << "After pushing: ";
+        pq.print();
+        cout << "Size: " << pq.getSize() << ", Top: " << pq.getTop() << "\n";
+        
+        // Pop all elements and verify order
+        vector<int> popped;
+        while (!pq.isEmpty()) {
+            popped.push_back(pq.getTop());
+            cout << "Popping: " << pq.getTop() << "\n";
+            pq.pop();
+        }
+        
+        cout << "Popped sequence (should be in descending order): ";
+        for (size_t i = 0; i < popped.size(); ++i) {
+            cout << popped[i];
+            if (i < popped.size() - 1) cout << ", ";
+        }
+        cout << "\n";
+        
+        // Check if properly sorted in descending order
+        bool sorted = true;
+        for (size_t i = 1; i < popped.size(); ++i) {
+            if (popped[i] > popped[i-1]) {
+                sorted = false;
+                break;
+            }
+        }
+
+        assert(sorted);
+        cout << "Test 1 Result: " << (sorted ? "✅ PASSED" : "❌ FAILED") << "\n";
+    }
+    
+    // Test 2: Copy and move operations
+    {
+        cout << "\nTest 2: Copy and move operations\n";
+        PairingPQ<int> pq1;
+        for (int i = 1; i <= 5; ++i) {
+            pq1.push(i);
+        }
+        
+        // Test copy constructor
+        PairingPQ<int> pq2(pq1);
+        cout << "Original top: " << pq1.getTop() << ", Copy top: " << pq2.getTop() << "\n";
+        
+        // Test move constructor
+        PairingPQ<int> pq3(std::move(pq1));
+        cout << "After move, pq3 top: " << pq3.getTop() << ", pq1 empty (should be true): " << pq1.isEmpty() << "\n";
+        
+        bool testPassed = (pq2.getTop() == 5) && (pq3.getTop() == 5) && pq1.isEmpty();
+        assert(testPassed);
+        cout << "Test 2 Result: " << (testPassed ? "✅ PASSED" : "❌ FAILED") << "\n";
+    }
+    
+    // Test 3: Range constructor
+    {
+        cout << "\nTest 3: Range constructor\n";
+        vector<int> vec = {3, 1, 4, 1, 5, 9, 2, 6};
+        PairingPQ<int> pq(vec.begin(), vec.end());
+        
+        cout << "Created from vector, top: " << pq.getTop() << ", size: " << pq.getSize() << "\n";
+        
+        bool testPassed = (pq.getTop() == 9) && (pq.getSize() == vec.size());
+        assert(testPassed);
+        cout << "Test 3 Result: " << (testPassed ? "✅ PASSED" : "❌ FAILED") << "\n";
+    }
+
+    // Test 4: pop()
+    {
+        PairingPQ<int> pq;
+        auto node1 = pq.addNode(10);  // root
+        auto node2 = pq.addNode(20);  // becomes child of root
+
+        // At this point: root(10) -> child(20) -> sibling(30)
+        // numNodes = 3
+
+        assert(node1->getElt() == 10);
+        assert(node2->operator*() == 20);
+
+        pq.pop();  // Removes root(20), numNodes becomes 2
+        assert(pq.getSize() == 1);
+        assert(pq.getTop() == 10);
+        cout << "Test 4 Result: ✅ PASSED\n";
+    }
+
+
+    // Test 4: updateElt()
+    // {
+    //     cout << "\nTest 4: updateElt() corner cases\n";
+    //     PairingPQ<int> pq;
+        
+    //     // Push some values
+    //     vector<int> values = {5, 1, 8, 3, 9, 2, 7};
+    //     for (int val : values) {
+    //         pq.push(val);
+    //     }
+
+    //     auto n1 = pq.addNode(5); // then this one
+    //     auto n2 = pq.addNode(1);
+    //     auto n3 = pq.addNode(8);
+    //     auto n4 = pq.addNode(3); // this one first
+    //     auto n5 = pq.addNode(9);
+    //     auto n6 = pq.addNode(2);
+    //     auto n7 = pq.addNode(7);
+
+    //     pq.updateElt(n3, 4);
+
+    //     /**
+    //      * need one where it replaces root, and then one that doesnt. then one update to a left most node, middle, and rightmost. then multilevel. 
+    //      */
+
+
+
+    //     pq.updateElt(n1, 10);
+    // }
+    
+    cout << "\n\n********** END: Testing PairingPQ Invariants: Basic & Corner Cases ✅ **********\n" << endl;
+} // testPairingPQ()
+
+
+
+/// @brief Test function for PairingPQ with updateElt functionality
+void testPairingPQUpdateElt() 
+{
+    cout << "\n\n********** START: Testing PairingPQ with Specific updateElt() Corner Cases **********\n" << endl;
+    
+    // Create a max-heap
+    PairingPQ<int> pq;
+    
+    // Add nodes and keep track of them
+    std::cout << "Adding nodes with values: 10, 20, 30, 40, 50" << std::endl;
+    auto node10 = pq.addNode(10);
+    auto node20 = pq.addNode(20);
+    auto node30 = pq.addNode(30);
+    auto node40 = pq.addNode(40);
+    auto node50 = pq.addNode(50);
+    
+    pq.print();
+    
+    // Update a node to have higher priority
+    std::cout << "\nUpdating node with value 20 to 60" << std::endl;
+    pq.updateElt(node20, 60);
+    pq.print();
+    pq.updateElt(node50, 70);
+    pq.print();
+    assert(node10->operator*() == 10);
+    pq.updateElt(node10, 65);
+    pq.print();
+    pq.updateElt(node30, 61);
+    assert(node30->getElt() == 61);
+    pq.print();
+    pq.updateElt(node40, 59);
+    pq.print();
+    
+    std::cout << "\nPopping all elements (should be in descending order):" << std::endl;
+    while (!pq.isEmpty()) {
+        std::cout << pq.getTop() << " ";
+        pq.pop();
+    }
+    std::cout << std::endl;
+    
+    cout << "\n\n********** END: Testing PairingPQ with Specific updateElt() Corner Cases Complete ✅ **********\n" << endl;
+} // testPairingPQUpdateElt()
+
+
+
+void testExceptions() 
+{
+    cout << "\n\n********** START: Testing Exception Handling (MA) **********\n" << endl;
+    
+    // Test 1: pop() on empty heap
+    {
+        cout << "Test 1: pop() on empty heap" << endl;
+        PairingPQ<int> pq;
+        try {
+            pq.pop();
+            cout << "Test 1 failed: Expected exception on empty pop\n";
+        } catch (const std::runtime_error& e) {
+            cout << "Test 1 passed: Empty queue throws on pop\n";
+        }
+    }
+    
+    // Test 2: getTop() on empty heap
+    {
+        cout << "Test 2: getTop() on empty heap" << endl;
+        PairingPQ<int> pq;
+        try {
+            pq.getTop();
+            cout << "Test 2 failed: Expected exception on empty getTop\n";
+        } catch (const std::runtime_error& e) {
+            cout << "Test 2 passed: Empty queue throws on getTop\n";
+        }
+    }
+    
+    // Test 3: updateElt() with null node
+    {
+        cout << "Test 3: updateElt() with null node" << endl;
+        PairingPQ<int> pq;
+        try {
+            pq.updateElt(nullptr, 42);
+            cout << "Test 3 failed: Expected exception on null updateElt\n";
+        } catch (const std::invalid_argument& e) {
+            cout << "Test 3 passed: Null node throws on updateElt\n";
+        }
+    }
+    
+    // Test 4: updateElt() with invalid new value
+    {
+        cout << "Test 4: updateElt() with invalid new value" << endl;
+        PairingPQ<int> pq;
+        auto node = pq.addNode(50);
+        try {
+            pq.updateElt(node, 30); // Trying to decrease priority
+            cout << "Test 4 failed: Expected exception on invalid updateElt\n";
+        } catch (const std::invalid_argument& e) {
+            cout << "Test 4 passed: Invalid updateElt throws\n";
+        }
+    }
+    
+    // Test 5: Verify heap still works after exception
+    {
+        cout << "Test 5: Heap functionality after exceptions" << endl;
+        PairingPQ<int> pq;
+        
+        // Try invalid operations
+        try { pq.pop(); } catch (...) {}
+        try { pq.getTop(); } catch (...) {}
+        
+        // Heap should still work normally
+        pq.push(10);
+        pq.push(20);
+        assert(pq.getSize() == 2);
+        assert(pq.getTop() == 20);
+        pq.pop();
+        assert(pq.getTop() == 10);
+        cout << "Test 5 passed: Heap functionality still works after exceptions\n";
+    }
+    
+    cout << "\n\n********** END: Testing Exception Handling (MA) Complete ✅ **********\n" << endl;
+} // testExceptions()
+
+
 int main()
 {
     // Basic pointer, allocate a new PQ later based on user choice.
@@ -1905,11 +2780,11 @@ int main()
 
     vector<string> types
     {
-        "Unordered",
-        "UnorderedOPT",
-        "Sorted",
-        "Binary",
-        "Pairing",
+        "Unordered",    // 0
+        "UnorderedOPT", // 1
+        "Sorted",       // 2
+        "Binary",       // 3
+        "Pairing",      // 4
     }; // choice types
     
     unsigned int choice;
@@ -1946,6 +2821,10 @@ int main()
         pq1 = new SortedPQ<int>;
         pq2 = new SortedPQ<int>(start, end);
 
+        // testSortedPQUpdateCornerCase(); // MA
+        // testSortedPQUpdateMethod(); // MB
+        testSortedPQUpdateCornerCase();
+
         testSortedPQ(pq1, types[choice]);
 
         // TODO: Add more tests to this function for the range-based constructor and pq2!
@@ -1959,6 +2838,26 @@ int main()
         additionalBinPQEdgeTests();
         pq1 = new BinPQ<int>;
         pq2 = new BinPQ<int>(start, end);
+    }
+    else if (choice == 4)
+    {
+        // MA: Test the exception handling
+        testExceptions();
+
+        // Test the pairing heap
+        vector<int> turn1;
+        turn1.push_back(0);
+        turn1.push_back(1);
+        testPairing(turn1);
+
+        vector<int> turn2; // empty vector
+        testPairing(turn2, false);
+
+        testPairingPQ();
+        testPairingPQUpdateElt();
+
+        pq1 = new PairingPQ<int>;
+        pq2 = new PairingPQ<int>(start, end);
     }
     else
     {

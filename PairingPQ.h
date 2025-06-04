@@ -40,7 +40,7 @@ public:
         // statement in PairingPQ's add_node() function).
         friend PairingPQ;
         
-        
+
     private:
 
         TYPE elt;
@@ -326,9 +326,9 @@ public:
             
             // three main cases:
             // 1. node = root,
-            // 2. node != root & new_val < parent->elt (min work)
+            // 2. node != root & new_val < parent->elt (no work needed)
             // 3. node != root & new_val > parent->elt (max work: two sub cases)
-            // 3a. node = leftmost (sever 2 links)
+            // 3a. node = leftmost or rightmost (sever 2 links)
             // 3b. node != leftmost (severe 3 links)
             
             // check for parent, roots dont have parents
@@ -360,19 +360,15 @@ public:
                             temp2 = temp2->sibling;
                         }
                         
-                        // sever the link
-                        temp2 = nullptr;
+                        // extend the link past me
+                        temp2->sibling = node->sibling;
                     }
                     
-                    // check for sibling and parent, then sever 2 links
+                    // sever sibling and parent links
                     node->parent = nullptr;
                     node->sibling = nullptr;
                     
-                    // ready to meld (if second level, then update root)
-                    if (temp1 == root)
-                        root = meld(temp1, node);
-                    else
-                        meld(temp1, node); // WHY DONT I SET THE ROOT HERE????
+                    root = meld(root, node);
                     
                 }
             }
@@ -447,3 +443,22 @@ private:
 };
 
 #endif // PAIRINGPQ_H
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

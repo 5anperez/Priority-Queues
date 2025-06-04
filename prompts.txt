@@ -2374,7 +2374,7 @@ That's why the current implementation using lower_bound is correct for a priorit
 
 
 
-P5:
+P5.1:
 
 i am working on a sorte pq implement which is based on the SPsPQ interface and is one pq version i am interested in and will experiment with where my projects goal is to implement, experiment with, and pick out my own version of a pq (eg binary, sorted, etc) container that will eventually drive a stock market simulator however, i dont want to trivialize the implement of the pq operations by using pq prebaked functions like priority_queue<>, partial_sort(), sort_heap() etc. i dont want to use smart pointers either. but i am however using the stl for lower level vector operations since i am mostly interested in the PQ mechanics. i forgot to comment and document the sorted version, can u do that for me and make sure that it is in the same format and style as the binary version? note that most functions and the class is documented up top and whenever i use stl methods i also comment a note on their functionality. Then, can you add a function that i missed, ie, i need a "print()" function to display the entire heap for testing. and finally formulate a self contained corner case test function for sorted that will test the updatePQ method by filling up the container via push, modify/corrupt some values manually, call updatePQ and check that the top and pop values are correct. 
 
@@ -2833,6 +2833,7 @@ private:
 
 CRIT:
 
+both models are mixing up minheap and maxheap in the testSortedPQUpdate function! 
 
 
 
@@ -2860,7 +2861,9 @@ CRIT:
 
 
 
+P5.2:
 
+the test case creates a sorted pq with the greater comparator, but then treats it as a max heap, which is incorrect. resolve that then generate a derived class that defines a pairing heap and implement it to produce a pairing pq. 
 
 
 
@@ -2872,8 +2875,16 @@ CRIT:
 
 
 
+CRIT2:
 
+theyre both good regarding the test case.
 
+MA has a typo:
+if (node->nextS sibling) {
+    std::cout << ", ";
+    printTree(node->nextSibling, prefix);
+}
+in the if-statment. after fixed, the usual errors arise. 
 
 
 
@@ -2883,16 +2894,31 @@ CRIT:
 
 
 
+CRIT1:
 
+MA needs a "T &getElt() const { return elt; }" and a "const T &operator*() const { return elt; }" functions for the node class. Its pq segfaults on lines 464-473 in MA_PQ.h. For MA, in its meld, whats the pupose of setting a->c->p = null if its originally not null? Why reset?
 
+eg:
+if (a->firstChild != nullptr) {
+    a->firstChild->parent = nullptr; // Will be reset below
+}
 
+This block triggered when we pushed the 4th element '3' and it caused three's sibling '5' to sever the parent ptr and set it to null, but in my version, that doesnt happen and five's parent is the root '8'.
 
 
 
+Both fail on this:
 
+while (!pq.isEmpty()) {
+    actual.push_back(pq.getTop());
+    pq.pop();
+}
 
+and both have the RED within meld/merge of the 2nd if statement. a newNode will never be null, will it?
 
+Which model is OVERALL better? 
 
+They both pass all tests, but I like B better. 
 
 
 
@@ -2904,6 +2930,732 @@ CRIT:
 
 
 
+
+
+P5.3:
+
+I am constrained on memeory. is this pq implement version good on memory? also when, or what scenario will cause the 2nd if to execute within the merge? also, no smart ptrs, but regular ptrs are allowed and prefered. change the class to be ptr-based and simplify the node the member names stored to simply child, sibling, and prev. 
+
+
+
+
+
+
+
+
+
+
+CRIT:
+
+MA is better
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P5.4:
+
+having two sizes is bit confusing, change the node member to numNodes. then add two functions to make the pq a true pairing heap: updateValue, which should update the priority of a node already in the heap by replacing the element refered to by the Node with newValue. it muust maintain pairing heap invariants and the new priority, 'newValue' must be more extreme as defined by comp than the old priority. then implement addNode, which should add a new element to the pairing heap then returns a Node* corresponding to the newly added element.
+
+
+
+
+
+
+
+
+
+CRIT:
+
+MA GOT IT.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P6.1:
+
+I just implementd the follwng pairing heap but i am not getting the right results. i dont use any methods that trivialize the heap operations but i will use other facilities. 
+
+
+
+
+#ifndef PAIRINGPQ_H
+#define PAIRINGPQ_H
+
+#include "SPsPQ.h"
+#include <deque>
+#include <utility>
+#include <iostream>
+
+using namespace std;
+
+
+///       Uses raw pointers for memory efficiency.
+template <typename T, typename Compare = std::less<T>>
+class PairingPQ : public SPsPQ<T, Compare>
+{
+    using BaseClass = SPsPQ<T, Compare>;
+    
+public:
+    
+    // Each node within the pairing heap
+    class Node
+    {
+
+    public:
+        
+        // Node ctor
+        explicit Node(const T &val)
+        : elt{ val }, child{ nullptr }, sibling{ nullptr }, parent{ nullptr }
+        {}
+        
+        const T &getElt() const { return elt; }
+        const T &operator*() const { return elt; }
+        
+        friend PairingPQ;
+        
+
+    private:
+
+        T elt;
+        Node *child;
+        Node *sibling;
+        Node *parent;
+        
+    }; // class Node
+    
+    
+    explicit PairingPQ(const Compare &comp = Compare()) :
+    BaseClass{ comp }, root{ nullptr }, numNodes{ 0 }
+    {} // DEFAULT CTOR
+    
+    
+    template<typename InputIterator>
+    PairingPQ(InputIterator start, InputIterator end,
+              const Compare &comp = Compare()) :
+    BaseClass{ comp }, root{ nullptr }, numNodes{ 0 }
+    {
+        while (start != end)
+        {
+            push(*start);
+            start++;
+        }
+        
+    } // R-B CTOR
+    
+    
+    PairingPQ(const PairingPQ &other) :
+    BaseClass{ other.compareFunctor }, root{ nullptr }, numNodes{ 0 }
+    {
+        if (other.root)
+        {    // make a deque and insert root to other
+            std::deque<Node*> dq;
+            dq.push_back(other.root);
+            
+            while (!dq.empty())
+            {
+                // get the next element
+                Node *ptr = traversalHelper(dq);
+                
+                // I now have the current node's child and sibling in the deck
+                // waiting to get pushed. I push the current node first.
+                push(ptr->elt);
+            }
+        }
+        
+    } // COPY CTOR
+    
+    
+    PairingPQ &operator=(const PairingPQ &rhs)
+    {
+        // copy-swap method (idiot check not needed from now on)
+        
+        // use copy ctor to create a copy of the refrenced object on rhs
+        PairingPQ temp(rhs);
+        
+        // begin swapping the temp's members with the current object's (lhs) members to get lhs = rhs.
+        std::swap(temp.numNodes, numNodes);
+        std::swap(temp.root, root);
+        
+        // temp is now destroyed once it goes out-of-scope.
+        return *this;
+        
+    } // operator=()
+
+
+
+    // Move constructor  
+    PairingPQ(PairingPQ&& other) noexcept
+        : BaseClass(std::move(other)), 
+          root(other.root),
+          numNodes(other.numNodes) 
+    {
+        other.root = nullptr;
+        other.numNodes = 0;
+    }
+    // MOVE CTOR
+
+
+
+    Node *traversalHelper(std::deque<Node*> &dq)
+    {
+        // Get the starting point and pop it.
+        Node *ptr = dq.front();
+        dq.pop_front();
+            
+        // Add the child and sibling if their not null.
+        if (ptr->sibling)
+            dq.push_back(ptr->sibling);
+        if (ptr->child)
+            dq.push_back(ptr->child);
+
+        return ptr;
+    } // traversalHelper()
+
+
+
+
+    ~PairingPQ()
+    {
+        // make a deque and insert root
+        std::deque<Node*> dq;
+        
+        if (!root)
+            return;
+        
+        dq.push_back(root);
+        
+        while (!dq.empty())
+        {
+            // get the next element
+            Node *ptr = traversalHelper(dq);
+            
+            // delete the current node
+            delete ptr;
+        }
+        
+        numNodes = 0;
+        
+    } // ~PairingPQ()
+
+
+
+
+    
+    virtual void updatePQ()
+    {
+        // create an aux deck
+        std::deque<Node*> dq;
+        dq.push_back(root->child);
+        root->child = nullptr;
+        
+        // while not empty we take something out
+        while (!dq.empty())
+        {
+            // get a starting point
+            Node *ptr = traversalHelper(dq);
+            
+            // sever the relationship
+            ptr->parent = nullptr;
+            //ptr->child = nullptr;
+            ptr->sibling = nullptr;
+            
+            // now were ready to meld
+            root = meld(ptr, root);
+            
+        } // while()
+        
+    } // updatePQ()
+
+
+    
+  
+    virtual void push(const T &val)
+    {
+        addNode(val);
+    } // push()
+    
+    
+   
+    virtual void pop()
+    {
+        if (isEmpty())
+            throw std::runtime_error("Priority queue is empty");
+
+        // placeholder
+        Node *temp = root->child;
+        
+        // Reset the root before deleting the node
+        root->child = nullptr;
+        
+        // pop the root
+        delete root;
+        numNodes--;
+        
+        // two cases: empty and not empty
+        if (!temp)
+        {
+            // update the root
+            root = nullptr;
+        }
+        else if (getSize() == 1)
+        {
+            temp->parent = nullptr;
+            root = temp;
+        }
+        // not empty case
+        else
+        {
+            // create a deque of pointers
+            std::deque<Node*> dq;
+        
+            // fill it with the remaining heap
+            while (temp)
+            {
+                dq.push_back(temp);
+                temp = temp->sibling;
+            }
+            
+            // we now perform a multi-pass on the dq
+            while (dq.size() != 1)
+            {
+                size_t index = 0;
+                
+                // break the sibling parent relation
+                dq[index]->parent = nullptr;
+                dq[index]->sibling = nullptr;
+                dq[index + 1]->parent = nullptr;
+                dq[index + 1]->sibling = nullptr;
+                
+                // meld two elements and push them to back
+               dq.push_back(meld(dq[index], dq[index + 1]));
+                    
+                // pop the ones that were just melded
+                dq.pop_front();
+                dq.pop_front();
+            }
+            
+            // heap restored
+            root = dq.front();
+            dq.pop_front();
+        }
+        
+    } // pop()
+    
+    
+    
+    virtual const T &getTop() const
+    {
+        if (isEmpty())
+            throw std::runtime_error("Priority queue is empty");
+        return root->elt;
+    } // getTop()
+    
+    
+    
+    virtual std::size_t getSize() const
+    {
+        return numNodes;
+        
+    } // getSize()
+    
+    // Description: Return true if the pairing heap is empty.
+    // Runtime: O(1)
+    virtual bool isEmpty() const
+    {
+        // if root = null, empty
+        return !root;
+        
+    } // isEmpty()
+    
+    
+    
+    void updateElt(Node* node, const T &new_value)
+    {
+        // check for precondition
+        if (this->compareFunctor(node->elt, new_value))
+        {
+            // update elt
+            node->elt = new_value;
+            
+            
+            if (node->parent)
+            {
+                if (this->compareFunctor(node->parent->elt, new_value))
+                {
+                    // store the parent before i sever link
+                    Node *p = node->parent;
+
+                    // start at leftmost
+                    Node *curr = p->child;
+
+                    // check if I am leftmost
+                    if (curr == node)
+                    {
+                        // give the old root a new child, which is leftmost's sibling
+                        p->child = node->sibling;
+                    }
+                    // check for prev, sibling, and parent, then sever 3 links
+                    else
+                    {
+                        // traverse until one before node
+                        while (curr->sibling != node)
+                        {
+                            curr = curr->sibling;
+                        }
+                        
+                        // sever the link
+                        curr = nullptr;
+                        
+                    }
+                    
+                    // check for sibling and parent, then sever 2 links
+                    node->parent = nullptr;
+                    node->sibling = nullptr;
+                    
+                    // ready to meld (if second level, then update root)
+                    if (p == root)
+                        root = meld(p, node);
+                    else
+                        meld(p, node); 
+
+                    
+                }
+            }
+        }
+        
+    } // updateElt()
+    
+    
+   
+    Node* addNode(const T &val)
+    {
+        // use the new keyword here to create the new node
+        Node *newNode = new Node{ val };
+        
+        // we have two cases: empty and size > 0
+        
+        
+        if (isEmpty()) // give it to root
+            root = newNode;
+        else        // meld it
+            root = meld(newNode, root);
+        
+        numNodes++;
+        
+        return root;
+        
+    } // addNode()
+
+
+
+    /// @brief Print the heap structure for debugging.
+    /// @note Uses level-order traversal to display the heap structure.
+    void print() const 
+    {
+        std::cout << "PairingPQ structure (size=" << numNodes << "):\n";
+        if (isEmpty()) {
+            std::cout << "[empty]\n";
+            return;
+        }
+        
+        printTree(root, 0);
+        std::cout << std::endl;
+    }
+    // print()
+    
+    
+private:
+    
+    // Links two non null heaps: root a and root b (b is always the curr root)
+    // these roots must not have a parent or siblings.
+    Node* meld(Node *a, Node *b)
+    {
+        // get extreme
+        if (this->compareFunctor(b->elt, a->elt))
+        {
+            // give b a new parent and sibling
+            b->parent = a;
+            b->sibling = a->child;
+            
+            // give a a new child
+            a->child = b;
+            
+            // return the larger one
+            return a;
+        }
+        
+        // give a a new parent and sibling
+        a->parent = b;
+        a->sibling = b->child;
+        
+        // give b a new child
+        b->child = a;
+        
+        // return the larger one
+        return b;
+        
+    } // meld()
+
+
+
+    /// @brief Recursively print the tree structure.
+    /// @param node: Current node to print.
+    /// @param depth: Current depth in the tree.
+    void printTree(Node* node, int depth) const 
+    {
+        if (node == nullptr) return;
+        
+        // Print current node with indentation
+        for (int i = 0; i < depth; ++i) {
+            std::cout << "  ";
+        }
+        std::cout << node->elt << "\n";
+        
+        // Print all children
+        Node* child = node->child;
+        while (child != nullptr) {
+            printTree(child, depth + 1);
+            child = child->sibling;
+        }
+    } // printTree()
+
+    
+    // root of heap and size
+    Node *root;
+    size_t numNodes;
+};
+
+
+
+
+
+#endif // PAIRINGPQ_H
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CRIT:
+
+MA got one bug but missed another smaller one.
+
+MB is incorrect about pop() while loop condition and when numNodes == 1. Also, incorrect about the updateElt precondition check. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P5.2
+
+Im still failing.
+
+
+
+CRIT:
+
+MB is way better.
+
+
+
+
+P5.3:
+
+Cool, im passing now but the code is not well documented. can you provide a version with helpful comments and function briefs like the print function that explain the mechanics and any non-obvious aspects and/or caveats. also incude a runtime analysis for each function. then can u clean up some code duplicate like the parent and sib sever in pop. abstract that functionality since its sprinkled around everywhere and pachage it into a helper to call from the relevant spots. i see atleast three spots . meld hascode dupe too. then update any functions that require exceptions but dont have them and provide a test case for each 2 verfy throw.
+
+
+IE, 2-PART: COMMENTING AND ABSTRACTION
+
+
+
+
+
+CRIT:
+
+
+MA isnt commenting within funcs. it calls mulitpass twopass. it miss named the sever helper and gave incorrect documentation for it, ie, it does sever children! It missed an opportunity to use the sever helper within its removeNodeFromTree helper! I was expecting swap in meld, but it did an abstraction instead. MB got R-B CTOR, updatePQ, complexity incorrect. It didnt update meld, but did good with the sibling parent sever abstract. MB got updateElt wrong with a logic error or typo.
+
+
+
+
+
+
+
+
+
+
+
+
+
+P5.4:
+
+main tradeoff between prev and parent?
+
+
+
+
+
+
+CRIT: 
+
+I like MB #1 name, but they both got it. MA's #2 is wonky, i like MB's. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P6:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PX:
+
+whats the runtime of updatePQ?
+
+
+lets get it to O(n)
 
 
 
